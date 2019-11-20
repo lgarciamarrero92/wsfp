@@ -24,6 +24,7 @@
         "vue-template-compiler": "^2.6.10"
     },
     "dependencies": {
+        "@geoman-io/leaflet-geoman-free": "^2.3.0",
         "leaflet": "^1.6.0"
     }
 }
