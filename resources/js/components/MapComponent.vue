@@ -108,7 +108,9 @@ export default {
             drawnItems.addLayer(layer);
             layer.on('click',function(){
                 vm.typeOfFigure = type;
-                vm.$bvModal.show('modal-center')
+                Vue.nextTick( function () {
+                    vm.$bvModal.show('modal-center')
+                })
             });
         });
 
@@ -177,6 +179,7 @@ export default {
 #map {
     width: 100%;
 }
+
 /*
 #map.mode-create {
     cursor: crosshair !important;

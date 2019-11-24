@@ -2,11 +2,13 @@
     <b-modal 
         id="modal-center" 
         centered 
-        title="Set details"
+        title="Set details for this area"
         no-close-on-esc
         no-close-on-backdrop
         and hide-header-close
         @ok.prevent="onSave"
+        @hidden="resetModal"
+        @show="showModal"
     >
     <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <b-button variant="secondary" :disabled="isBusy" @click="cancel()">Cancel</b-button>
@@ -18,14 +20,37 @@
         </template>
       </b-button>
     </template>
-    <p class="my-4">{{type}}</p>
+
+    <div id = "form" class = "container" >
+        <div id = "energy-types" class = "row">
+            <b-form-group>
+                <template slot="label">
+                    Select which energy sources can be used
+                    <span class="required">*</span>
+                </template>
+                <b-form-checkbox-group
+                    v-model="energySelected"
+                    :options="energyOptions"
+                ></b-form-checkbox-group>
+            </b-form-group>
+            {{energySelected}}
+        </div>
+    </div>
+
   </b-modal>
 </template>
 <script>
 export default {
     data() {
         return {
-            saving: false
+            saving: false,
+            energySelected: [],
+            energyOptions: [
+                {text: 'Solar', value: 'solar'},
+                {text: 'Eolic', value: 'eolic'},
+                {text: 'Biomass', value: 'biomass'},
+                {text: 'Hydraulic', value: 'hydraulic'},
+            ]
         };
     },
     computed: {
@@ -45,6 +70,11 @@ export default {
                 vm.$bvModal.hide('modal-center')
                 vm.showMsgBoxOk()
             },2000)
+        },
+        resetModal(){
+        },
+        showModal(){
+            console.log(this.type)
         },
         showMsgBoxOk() {
             this.$bvModal.msgBoxOk(
