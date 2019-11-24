@@ -1885,18 +1885,51 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
-    return {};
+    return {
+      saving: false
+    };
+  },
+  computed: {
+    isBusy: function isBusy() {
+      return this.saving;
+    }
   },
   props: {
     type: String
   },
   methods: {
     onSave: function onSave() {
-      console.log('saving');
+      var vm = this;
+      this.saving = true;
+      setTimeout(function () {
+        vm.saving = false;
+        vm.$bvModal.hide('modal-center');
+        vm.showMsgBoxOk();
+      }, 2000);
+    },
+    showMsgBoxOk: function showMsgBoxOk() {
+      this.$bvModal.msgBoxOk("Data saved successfully.", {
+        title: "Confirmation",
+        size: "sm",
+        okVariant: "success",
+        headerClass: "p-2 border-bottom-0",
+        footerClass: "p-2 border-top-0",
+        centered: true
+      }).then(function () {});
     }
-  }
+  },
+  mounted: function mounted() {}
 });
 
 /***/ }),
@@ -83837,15 +83870,68 @@ var render = function() {
         id: "modal-center",
         centered: "",
         title: "Set details",
-        "ok-title": "Save",
         "no-close-on-esc": "",
         "no-close-on-backdrop": "",
         and: "",
         "hide-header-close": ""
       },
-      on: { ok: _vm.onSave }
+      on: {
+        ok: function($event) {
+          $event.preventDefault()
+          return _vm.onSave($event)
+        }
+      },
+      scopedSlots: _vm._u([
+        {
+          key: "modal-footer",
+          fn: function(ref) {
+            var ok = ref.ok
+            var cancel = ref.cancel
+            return [
+              _c(
+                "b-button",
+                {
+                  attrs: { variant: "secondary", disabled: _vm.isBusy },
+                  on: {
+                    click: function($event) {
+                      return cancel()
+                    }
+                  }
+                },
+                [_vm._v("Cancel")]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  attrs: { variant: "primary", disabled: _vm.isBusy },
+                  on: {
+                    click: function($event) {
+                      return ok()
+                    }
+                  }
+                },
+                [
+                  !_vm.isBusy ? [_vm._v("Save")] : _vm._e(),
+                  _vm._v(" "),
+                  _vm.isBusy
+                    ? [
+                        _c("b-spinner", { attrs: { small: "" } }),
+                        _vm._v(" "),
+                        _c("span", { staticClass: "ml-2" }, [
+                          _vm._v("Saving...")
+                        ])
+                      ]
+                    : _vm._e()
+                ],
+                2
+              )
+            ]
+          }
+        }
+      ])
     },
-    [_c("p", { staticClass: "my-4" }, [_vm._v(_vm._s(_vm.type))])]
+    [_vm._v(" "), _c("p", { staticClass: "my-4" }, [_vm._v(_vm._s(_vm.type))])]
   )
 }
 var staticRenderFns = []
