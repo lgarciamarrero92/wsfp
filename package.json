@@ -35,6 +35,7 @@
         "leaflet-draw": "^1.0.4",
         "leaflet-easybutton": "^2.4.0",
         "leaflet-freedraw": "^2.12.0",
-        "leaflet-geosearch": "^2.7.0"
+        "leaflet-geosearch": "^2.7.0",
+        "leaflet-path-transform": "^1.1.2"
     }
 }

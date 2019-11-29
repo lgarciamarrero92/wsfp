@@ -86,8 +86,7 @@ export default {
                 circle: false, // Turns off this drawing tool
                 rectangle: {
                     shapeOptions: {
-                        color: '#bada55',
-                        clickable: false
+                        color: '#bada55'
                     }
                 }
             },
