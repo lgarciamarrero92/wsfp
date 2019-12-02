@@ -29,13 +29,17 @@
         "@fortawesome/fontawesome-free-brands": "^5.0.13",
         "@fortawesome/fontawesome-free-solid": "^5.0.13",
         "@geoman-io/leaflet-geoman-free": "^2.3.0",
+        "@turf/point-on-surface": "^4.7.3",
+        "@turf/turf": "^5.1.6",
         "bootstrap-vue": "^2.1.0",
+        "chart.js": "^2.9.3",
         "esri-leaflet-geocoder": "^2.3.2",
         "leaflet": "^1.6.0",
         "leaflet-draw": "^1.0.4",
         "leaflet-easybutton": "^2.4.0",
         "leaflet-freedraw": "^2.12.0",
         "leaflet-geosearch": "^2.7.0",
-        "leaflet-path-transform": "^1.1.2"
+        "leaflet-path-transform": "^1.1.2",
+        "vue-chartjs": "^3.5.0"
     }
 }

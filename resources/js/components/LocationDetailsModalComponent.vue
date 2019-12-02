@@ -19,7 +19,7 @@
         </template>
       </b-button>
     </template>
-
+    
     <div id = "form" class = "container" >
         <div id = "energy-types" class = "row">
             <b-form-group>
@@ -63,8 +63,17 @@
                     ></b-form-input>
                 </b-form-group>
             </div>
+            <button class = "btn btn-primary" :disabled="solarBusy" @click="createSolarGraph">
+                <div v-if="!solarBusy">Show graphs</div>
+                <div v-else> 
+                    <b-spinner small></b-spinner>
+                    <span class="ml-2">Creating...</span>
+                </div>
+            </button>
+            <div v-show="showSolarGraph" class = "col-12 p-0 my-3" id="solarchart" style="height: 250px;"></div>
+            
         </div>
-        
+       
         <div id = "eolic" class = "row">
             <div class = "col-12 p-0 my-3">
                 Select details for eolic source
@@ -73,39 +82,41 @@
             <div class = "col-12 p-0"> 
                 <b-form-group
                     label-cols="3"
-                    description="How far the panel is inclined from the horizontal, in degrees. A tilt of 0° is a panel facing directly upwards, 90° is a panel installed vertically, facing sideways."
-                    label="Tilt (°):"
+                    description="The height of the turbine's tower, that is, how far the blades are centred above the ground. Hub heights are limited to between 10 and 150 m."
+                    label="Hub height (m):"
                 >
                     <b-form-input
-                        v-model="form.solar.tilt"
+                        v-model="form.eolic.height"
                     >
 
                     </b-form-input>
                 </b-form-group>
             </div>
-            <div class = "col-12 p-0"> 
-                <b-form-group
-                    label-cols="3"
-                    description="Compass direction the panel is facing (clockwise). An azimuth angle of 180 degrees means poleward facing, so for latitudes >=0 is interpreted as southwards facing, else northwards facing."
-                    label="Azimuth (°):"
-                >
-                    <b-form-input 
-                        v-model="form.solar.azimuth"
-                    ></b-form-input>
-                </b-form-group>
-            </div>
+            <button class = "btn btn-primary" :disabled="eolicBusy" @click="createEolicGraph">
+                <div v-if="!eolicBusy">Show graphs</div>
+                <div v-else> 
+                    <b-spinner small></b-spinner>
+                    <span class="ml-2">Creating...</span>
+                </div>
+            </button>
+            <div v-show="showEolicGraph" class = "col-12 p-0 my-3" id="myfirstchart" style="height: 250px;"></div>
         </div>
-
+         
 
     </div>
 
   </b-modal>
 </template>
 <script>
+import { Bar } from 'vue-chartjs'
 export default {
     data() {
         return {
             saving: false,
+            showEolicGraph: false,
+            showSolarGraph: false,
+            eolicBusy: false,
+            solarBusy: false,
             energyOptions: [
                 {text: 'Solar', value: 'solar'},
                 {text: 'Eolic', value: 'eolic'},
@@ -117,8 +128,11 @@ export default {
                 solar: {
                     tilt: 35,
                     azimuth: 180
+                },
+                eolic: {
+                    height: 80
                 }
-            }
+            },
         };
     },
     computed: {
@@ -127,7 +141,8 @@ export default {
         }
     },
     props: {
-        type: String
+        type: String,
+        centroid: Array
     },
     methods: {
         onSave(){
@@ -142,7 +157,18 @@ export default {
         resetModal(){
         },
         showModal(){
-            console.log(this.type)
+            setTimeout( () => {
+                this.eolicGraph = new Morris.Line({
+                    element: 'myfirstchart',
+                    xkey: 'day',
+                    // A list of names of data record attributes that contain y-values.
+                    ykeys: ['wind_speed'],
+                    // Labels for the ykeys -- will be displayed when you hover over the
+                    // chart.
+                    labels: ['Wind Speed']
+                })
+            },1000)
+            
         },
         showMsgBoxOk() {
             this.$bvModal.msgBoxOk(
@@ -159,17 +185,89 @@ export default {
                
             });
         },
+        createSolarGraph(){
+            this.solarBusy = true
+            let vm = this
+            var config = {
+                headers: {
+                    'Authorization' : 'Token f7b818b71178a1dfc8c6756aa5957e88389e73b8'
+                }
+            };
+            axios.get(`https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/pv?&lat=${this.centroid[0]}&lon=${this.centroid[1]}&date_from=2018-01-01&date_to=2018-12-31&capacity=1&dataset=merra2&system_loss=0.1&tracking=0&format=json&local_time=true&raw=true&mean=day&tilt=${this.form.solar.tilt}&azim=${this.form.solar.azimuth}`,config).then( function(response){
+                //console.log(response.data)
+                var x = Object.keys(response.data.data)
+                //console.log(response.data.data)
+                var y = []
+                var data = []
+                x.forEach(element => {
+                    data.push({
+                        day: element,
+                        irradiance_direct: response.data.data[element].irradiance_direct
+                    })
+                });
+                $("#solarchart").empty();
+                new Morris.Line({
+                    // ID of the element in which to draw the chart.
+                    element: 'solarchart',
+                    // Chart data records -- each entry in this array corresponds to a point on
+                    // the chart.
+                    data: data,
+                    // The name of the data record attribute that contains x-values.
+                    xkey: 'day',
+                    // A list of names of data record attributes that contain y-values.
+                    ykeys: ['irradiance_direct'],
+                    // Labels for the ykeys -- will be displayed when you hover over the
+                    // chart.
+                    labels: ['Irradiance direct']
+                });
+                vm.showSolarGraph = true
+                vm.solarBusy = false
+            })
+
+        },
+        createEolicGraph(){
+            this.eolicBusy = true
+            let vm = this
+            var config = {
+                headers: {
+                    'Authorization' : 'Token f7b818b71178a1dfc8c6756aa5957e88389e73b8'
+                }
+            };
+            axios.get(`https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/wind?&lat=${this.centroid[0]}&lon=${this.centroid[1]}&date_from=2018-01-01&date_to=2018-12-31&capacity=1&dataset=merra2&height=${this.form.eolic.height}&turbine=Vestas+V80+2000&format=json&local_time=true&raw=true&mean=day`,config).then( function(response){
+                var x = Object.keys(response.data.data)
+                //console.log(response.data.data)
+                var y = []
+                var data = []
+                x.forEach(element => {
+                    data.push({
+                        day: element,
+                        wind_speed: response.data.data[element].wind_speed
+                    })
+                });
+                $("#myfirstchart").empty();
+                var eolicGraph = new Morris.Line({
+                    // ID of the element in which to draw the chart.
+                    element: 'myfirstchart',
+                    // Chart data records -- each entry in this array corresponds to a point on
+                    // the chart.
+                    data: data,
+                    // The name of the data record attribute that contains x-values.
+                    xkey: 'day',
+                    // A list of names of data record attributes that contain y-values.
+                    ykeys: ['wind_speed'],
+                    // Labels for the ykeys -- will be displayed when you hover over the
+                    // chart.
+                    labels: ['Wind Speed']
+                });
+                vm.showEolicGraph = true
+                vm.eolicBusy = false
+            })
+
+        }
     },
     mounted(){
         
-        var config = {
-            headers: {
-                'Authorization' : 'Token f7b818b71178a1dfc8c6756aa5957e88389e73b8'
-            }
-        };
-        axios.get('https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/wind?&lat=56&lon=-3&date_from=2018-01-01&date_to=2018-02-28&capacity=1&dataset=merra2&height=100&turbine=Vestas+V80+2000&format=json&local_time=true',config).then( function(response){
-            console.log(response.data)
-        })
+        
     }
 }
 </script>

@@ -3,7 +3,7 @@
     <div class = "w-100">
         <div id = "map" style = "height: 500px;" >
         </div>
-        <location-details-modal :type="typeOfFigure" >
+        <location-details-modal :type="typeOfFigure" :centroid = "centroid">
         </location-details-modal>
     </div>
 </template>
@@ -17,6 +17,7 @@ import { latLng, Icon, icon, Polygon } from 'leaflet'
 //import 'leaflet-easybutton'
 import 'leaflet-draw'
 import 'leaflet-draw/dist/leaflet.draw.css'
+import * as turf from '@turf/turf'
 //import 'esri-leaflet'
 //import 'esri-leaflet-geocoder'
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
@@ -25,6 +26,7 @@ export default {
         return {
             map: null,
             typeOfFigure: null,
+            centroid: null
         }
     },
     mounted() {
@@ -105,8 +107,29 @@ export default {
             var type = e.layerType
             var layer = e.layer;
             drawnItems.addLayer(layer);
+            var polygon = layer.toGeoJSON();
+            //var points1 = vm.generatePositions(polygon,45)
+            //var points = turf.featureCollection(points1)
+            //var hull = turf.convex(points);
+            //L.geoJSON(hull).addTo(vm.map);
+            /*
+            var bbox = turf.bbox(polygon);
+            var points = turf.randomPoint(25, {bbox: bbox})
+            //console.log(bbox);
+            var centroid = turf.centroid(polygon)
+            L.geoJSON(points).addTo(vm.map);
+            L.geoJSON(centroid).addTo(vm.map);
+            /*
+            for (let index = 0; index < 50; index++) {
+                var pointOnPolygon = turf.pointOnFeature(polygon);
+                L.geoJSON(pointOnPolygon).addTo(vm.map);
+            }
+            */
+            //console.log(pointOnPolygon)
             layer.on('click',function(){
                 vm.typeOfFigure = type;
+                var centroid = turf.centroid(polygon)
+                vm.centroid = centroid.geometry.coordinates
                 Vue.nextTick( function () {
                     vm.$bvModal.show('modal-center')
                 })
@@ -167,6 +190,118 @@ export default {
         }).addTo( this.map );
         */
     },
+    methods: {
+        generatePositions(polygon, angle){
+            var initialPoint = turf.centroid(polygon)
+            var queue = []
+            var see = []
+            var positions = []
+            queue.push({
+                p: initialPoint,
+                x: 0,
+                y: 0
+            })
+            positions.push(initialPoint)
+            see.push({
+                x:0,
+                y:0
+            })
+            var cn = 0 
+            while( queue.length > 0 ){
+                cn++
+                //if(cn == 1000)break
+                var item = queue.shift()
+                var options = {units: 'meters'};
+                //Rigth
+                if(!see.some(obj => obj.x == item.x+1 && obj.y == item.y)){
+                    var rigth = turf.destination(item.p, 2 , angle, options);
+                    angle += 90
+                    if( Math.abs(angle) > 180 ){
+                        angle -= 360
+                    }
+                    see.push({
+                        x: item.x+1,
+                        y: item.y
+                    })
+                    if( turf.booleanPointInPolygon(rigth, polygon) ){
+                        //L.geoJSON(rigth).addTo(this.map);
+                        queue.push({
+                            p: rigth,
+                            x: item.x+1,
+                            y: item.y
+                        })
+                        positions.push(rigth)
+                    }
+                }
+                //Left
+                if(!see.some(obj => obj.x == item.x-1 && obj.y == item.y)){
+                    var left = turf.destination(item.p, 2 , angle, options);
+                    angle += 90
+                    if( Math.abs(angle) > 180 ){
+                        angle -= 360
+                    }
+                    see.push({
+                        x: item.x-1,
+                        y: item.y
+                    })
+                    if( turf.booleanPointInPolygon(left, polygon) ){
+                        //L.geoJSON(left).addTo(this.map);
+                        queue.push({
+                            p: left,
+                            x: item.x-1,
+                            y: item.y
+                        })
+                        positions.push(left)
+                    }
+                }
+                //up
+                if(!see.some(obj => obj.x == item.x && obj.y == item.y+1)){
+                    var up = turf.destination(item.p, 2 , angle, options);
+                    angle += 90
+                    if( Math.abs(angle) > 180 ){
+                        angle -= 360
+                    }
+                    see.push({
+                        x: item.x,
+                        y: item.y+1
+                    })
+                    if( turf.booleanPointInPolygon(up, polygon) ){
+                        //L.geoJSON(up).addTo(this.map);
+                        queue.push({
+                            p: up,
+                            x: item.x,
+                            y: item.y+1
+                        })
+                        positions.push(up)
+                    }
+                }
+                //down
+                if(!see.some(obj => obj.x == item.x && obj.y == item.y-1)){
+                    var down = turf.destination(item.p, 2 , angle, options);
+                    angle += 90
+                    if( Math.abs(angle) > 180 ){
+                        angle -= 360
+                    }
+                    see.push({
+                        x: item.x,
+                        y: item.y-1
+                    })
+                    if( turf.booleanPointInPolygon(down, polygon) ){
+                        //L.geoJSON(down).addTo(this.map);
+                        queue.push({
+                            p: down,
+                            x: item.x,
+                            y: item.y-1
+                        })
+                        positions.push(down)
+                    }
+                }
+                
+                //console.log( item.x + " " + item.y )
+            }
+            return positions
+        }
+    }
 }
 </script>
 
