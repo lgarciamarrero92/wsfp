@@ -5,6 +5,7 @@
         title="Set details for this area"
         no-close-on-esc
         no-close-on-backdrop
+        size="lg"
         @ok.prevent="onSave"
         @hidden="resetModal"
         @show="showModal"
@@ -34,7 +35,7 @@
             </b-form-group>
         </div>
 
-        <div id = "solar" class = "row">
+        <div v-if="form.energies.includes('solar')" id = "solar" class = "row">
             <div class = "col-12 p-0 my-3">
                 Select details for solar source
                 <span class="required">*</span>
@@ -64,17 +65,23 @@
                 </b-form-group>
             </div>
             <button class = "btn btn-primary" :disabled="solarBusy" @click="createSolarGraph">
-                <div v-if="!solarBusy">Show graphs</div>
+                <div v-if="!solarBusy">Show charts</div>
                 <div v-else> 
                     <b-spinner small></b-spinner>
                     <span class="ml-2">Creating...</span>
                 </div>
             </button>
-            <div v-show="showSolarGraph" class = "col-12 p-0 my-3" id="solarchart" style="height: 250px;"></div>
             
         </div>
-       
-        <div id = "eolic" class = "row">
+       <div v-show="form.energies.includes('solar')" class = "row">
+            <div class = "col-5"></div>
+            <div class = "col-2">
+                <b-spinner v-if="solarBusy" style="position: relative; top: 175px;" small></b-spinner>
+            </div>
+            <div class = "col-5"></div>
+            <div v-show="showSolarGraph" class = "col-12" id="solarchart" style="height: 350px;"></div>
+        </div>
+        <div v-if="form.energies.includes('eolic')" id = "eolic" class = "row">
             <div class = "col-12 p-0 my-3">
                 Select details for eolic source
                 <span class="required">*</span>
@@ -93,16 +100,24 @@
                 </b-form-group>
             </div>
             <button class = "btn btn-primary" :disabled="eolicBusy" @click="createEolicGraph">
-                <div v-if="!eolicBusy">Show graphs</div>
+                <div v-if="!eolicBusy">Show charts</div>
                 <div v-else> 
                     <b-spinner small></b-spinner>
                     <span class="ml-2">Creating...</span>
                 </div>
             </button>
-            <div v-show="showEolicGraph" class = "col-12 p-0 my-3" id="myfirstchart" style="height: 250px;"></div>
+            
         </div>
-         
-
+        <div v-show="form.energies.includes('eolic')" class = "row">
+            <div class = "col-5"></div>
+            <div class = "col-2">
+                <b-spinner v-if="eolicBusy" style="position: relative; top: 175px;" small></b-spinner>
+            </div>
+            <div class = "col-5"></div>
+            <div v-show="showEolicGraph" class = "col-12" id="myfirstchart" style="height: 350px;">
+                
+            </div>
+        </div>
     </div>
 
   </b-modal>
@@ -127,7 +142,7 @@ export default {
                 energies: [],
                 solar: {
                     tilt: 35,
-                    azimuth: 180
+                    azimuth: 45
                 },
                 eolic: {
                     height: 80
@@ -187,14 +202,15 @@ export default {
         },
         createSolarGraph(){
             this.solarBusy = true
+            this.showSolarGraph = true
             let vm = this
             var config = {
                 headers: {
                     'Authorization' : 'Token f7b818b71178a1dfc8c6756aa5957e88389e73b8'
                 }
             };
-            axios.get(`https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/pv?&lat=${this.centroid[0]}&lon=${this.centroid[1]}&date_from=2018-01-01&date_to=2018-12-31&capacity=1&dataset=merra2&system_loss=0.1&tracking=0&format=json&local_time=true&raw=true&mean=day&tilt=${this.form.solar.tilt}&azim=${this.form.solar.azimuth}`,config).then( function(response){
-                //console.log(response.data)
+            axios.get(`https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/pv?&lat=${this.centroid[1]}&lon=${this.centroid[0]}&date_from=2018-01-01&date_to=2018-12-31&capacity=1&dataset=merra2&system_loss=0.1&tracking=0&format=json&local_time=true&raw=true&mean=month&tilt=${this.form.solar.tilt}&azim=${this.form.solar.azimuth}`,config).then( function(response){
+                console.log(response.data)
                 var x = Object.keys(response.data.data)
                 //console.log(response.data.data)
                 var y = []
@@ -202,7 +218,7 @@ export default {
                 x.forEach(element => {
                     data.push({
                         day: element,
-                        irradiance_direct: response.data.data[element].irradiance_direct
+                        irradiance_direct: response.data.data[element].electricity
                     })
                 });
                 $("#solarchart").empty();
@@ -212,6 +228,7 @@ export default {
                     // Chart data records -- each entry in this array corresponds to a point on
                     // the chart.
                     data: data,
+                    postUnits: 'kW/m²',
                     // The name of the data record attribute that contains x-values.
                     xkey: 'day',
                     // A list of names of data record attributes that contain y-values.
@@ -220,20 +237,21 @@ export default {
                     // chart.
                     labels: ['Irradiance direct']
                 });
-                vm.showSolarGraph = true
+                
                 vm.solarBusy = false
             })
 
         },
         createEolicGraph(){
             this.eolicBusy = true
+            this.showEolicGraph = true
             let vm = this
             var config = {
                 headers: {
                     'Authorization' : 'Token f7b818b71178a1dfc8c6756aa5957e88389e73b8'
                 }
             };
-            axios.get(`https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/wind?&lat=${this.centroid[0]}&lon=${this.centroid[1]}&date_from=2018-01-01&date_to=2018-12-31&capacity=1&dataset=merra2&height=${this.form.eolic.height}&turbine=Vestas+V80+2000&format=json&local_time=true&raw=true&mean=day`,config).then( function(response){
+            axios.get(`https://cors-anywhere.herokuapp.com/https://www.renewables.ninja/api/data/wind?&lat=${this.centroid[1]}&lon=${this.centroid[0]}&date_from=2018-01-01&date_to=2018-12-31&capacity=1&dataset=merra2&height=${this.form.eolic.height}&turbine=Vestas+V80+2000&format=json&local_time=true&raw=true&mean=month`,config).then( function(response){
                 var x = Object.keys(response.data.data)
                 //console.log(response.data.data)
                 var y = []
@@ -253,13 +271,14 @@ export default {
                     data: data,
                     // The name of the data record attribute that contains x-values.
                     xkey: 'day',
+                    postUnits: 'm/s',
                     // A list of names of data record attributes that contain y-values.
                     ykeys: ['wind_speed'],
                     // Labels for the ykeys -- will be displayed when you hover over the
                     // chart.
                     labels: ['Wind Speed']
                 });
-                vm.showEolicGraph = true
+                
                 vm.eolicBusy = false
             })
 
