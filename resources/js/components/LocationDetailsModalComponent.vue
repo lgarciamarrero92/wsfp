@@ -2,7 +2,7 @@
     <b-modal 
         id="modal-center" 
         centered 
-        title="Set details for this area"
+        title="Set area details"
         no-close-on-esc
         no-close-on-backdrop
         size="lg"
