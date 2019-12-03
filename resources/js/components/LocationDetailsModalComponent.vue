@@ -25,7 +25,7 @@
         <div id = "energy-types" class = "row">
             <b-form-group>
                 <template slot="label">
-                    Select which energy sources can be used
+                    <strong>Select which energy sources can be used</strong>
                     <span class="required">*</span>
                 </template>
                 <b-form-checkbox-group
@@ -37,7 +37,7 @@
 
         <div v-if="form.energies.includes('solar')" id = "solar" class = "row">
             <div class = "col-12 p-0 my-3">
-                Select details for solar source
+                <strong>Select details for solar source</strong>
                 <span class="required">*</span>
             </div>
             <div class = "col-12 p-0"> 
@@ -83,7 +83,7 @@
         </div>
         <div v-if="form.energies.includes('eolic')" id = "eolic" class = "row">
             <div class = "col-12 p-0 my-3">
-                Select details for eolic source
+                <strong>Select details for eolic source</strong>
                 <span class="required">*</span>
             </div>
             <div class = "col-12 p-0"> 
@@ -278,7 +278,7 @@ export default {
                     // chart.
                     labels: ['Wind Speed']
                 });
-                
+                //C89w9a7UrQKd2DE
                 vm.eolicBusy = false
             })
 
