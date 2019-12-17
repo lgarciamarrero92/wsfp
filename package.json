@@ -39,6 +39,7 @@
         "leaflet-easybutton": "^2.4.0",
         "leaflet-freedraw": "^2.12.0",
         "leaflet-geosearch": "^2.7.0",
+        "leaflet-geotiff": "git+https://github.com/stuartmatthews/leaflet-geotiff.git",
         "leaflet-path-transform": "^1.1.2",
         "vue-chartjs": "^3.5.0"
     }
