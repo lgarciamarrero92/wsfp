@@ -18,6 +18,10 @@ import { latLng, Icon, icon, Polygon } from 'leaflet'
 import 'leaflet-draw'
 import 'leaflet-draw/dist/leaflet.draw.css'
 import * as turf from '@turf/turf'
+import 'plotty';
+import GeoTIFF from 'geotiff';
+import 'leaflet-geotiff/leaflet-geotiff';
+import 'leaflet-geotiff/leaflet-geotiff-plotty';
 //import 'esri-leaflet'
 //import 'esri-leaflet-geocoder'
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
@@ -48,11 +52,32 @@ export default {
             attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
         })
 
+        const solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/DNI.tif', {
+            renderer: new L.LeafletGeotiff.Plotty({
+                colorScale: 'hot',
+                clampLow: false,
+                clampHigh: false,
+                displayMin: 300,
+                displayMax: 3700,
+            })
+        })
+
         this.map = L.map('map', {
             center: [0,0], 
             zoom: 2, 
             layers: [googleSat]
         });
+
+        var baseMaps = {
+            "Satelite": googleSat,
+            "Streets": tiles
+        };
+
+        var overlayMaps = {
+            "Solar": solar
+        };
+
+        L.control.layers(baseMaps, overlayMaps).addTo(this.map);
 
         const provider = new OpenStreetMapProvider();
 
