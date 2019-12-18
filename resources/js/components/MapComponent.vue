@@ -30,7 +30,8 @@ export default {
         return {
             map: null,
             typeOfFigure: null,
-            centroid: null
+            centroid: null,
+            layerActive: 'Satellite'
         }
     },
     mounted() {
@@ -52,16 +53,28 @@ export default {
             attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
         })
 
-        const solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/DNI.tif', {
+        const solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif', {
             renderer: new L.LeafletGeotiff.Plotty({
-                colorScale: 'hot',
+                colorScale: 'rainbow',
                 clampLow: false,
                 clampHigh: false,
-                displayMin: 300,
-                displayMax: 3700,
+                displayMin: 600,
+                displayMax: 2000,
             })
         })
-
+      
+        const eolic = new L.leafletGeotiff('CUB_wind-speed_50m.tif', {
+            opacity: .1,
+            renderer: new L.LeafletGeotiff.Plotty({
+                colorScale: 'rainbow',
+                clampLow: false,
+                clampHigh: false,
+                displayMin: 0,
+                displayMax: 10,
+            })
+            
+        })
+        
         this.map = L.map('map', {
             center: [0,0], 
             zoom: 2, 
@@ -69,13 +82,35 @@ export default {
         });
 
         var baseMaps = {
-            "Satelite": googleSat,
-            "Streets": tiles
+            "Satellite": googleSat,
+            "Streets": tiles,
+            "Solar": solar,
+            "Eolic": eolic
         };
 
         var overlayMaps = {
-            "Solar": solar
+            
         };
+
+        this.map.on('baselayerchange', (e) => {
+            this.layerActive = e.name
+        });
+
+        this.map.on('click',(e)=>{
+            if(this.layerActive == 'Solar'){
+                L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent("Photovoltaic power output: " + solar.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " kWh/kWp" )
+                    .openOn(this.map)
+            }else if(this.layerActive == 'Eolic'){
+                L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent("Wind velocity: " + eolic.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " m/s" )
+                    .openOn(this.map) 
+            }
+        })
+
+        
 
         L.control.layers(baseMaps, overlayMaps).addTo(this.map);
 
