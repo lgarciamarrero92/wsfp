@@ -116,11 +116,15 @@ export default {
                     legendSolar = L.control({position: 'bottomleft'});
                     legendSolar.onAdd = function (map) {
                         const div = L.DomUtil.create('div','solar legend');
+                        let mn = solar.options.renderer.options.displayMin;
+                        let mx = solar.options.renderer.displayMax;
                         div.innerHTML += '<img id="colorScaleImage" src=' + solar.options.renderer.colorScaleData + " style='vertical-align: middle; height:20px; width:300px;'/>";
                         div.innerHTML += '<br>'
                         for (let index = 0; index < 10; index++) {
-                            //div.innerHTML += '<span style = "margin-right: 20px;" > 2 </span>'
+                            div.innerHTML += '<span style = "writing-mode: vertical-rl; text-orientation: mixed;margin-right: 12px; margin-top: 2px;" >' +  mn + '</span>'
+                            mn += 140;
                         }
+                        div.innerHTML += '<span style = "margin-right: 12px; margin-top: 2px;" >kWh/kWp </span>'
                         return div;
                     };
                     legendSolar.onRemove = function (map){
@@ -134,11 +138,14 @@ export default {
                     legendEolic = L.control({position: 'bottomleft'});
                     legendEolic.onAdd = function (map) {
                         const div = L.DomUtil.create('div','eolic legend');
+                        let mn = eolic.options.renderer.options.displayMin;
                         div.innerHTML += '<img id="colorScaleImage" src=' + eolic.options.renderer.colorScaleData + " style='vertical-align: middle; height:20px; width:300px;'/>";
                         div.innerHTML += '<br>'
                         for (let index = 0; index < 10; index++) {
-                            //div.innerHTML += '<span style = "margin-right: 20px;" > 2 </span>'
+                            div.innerHTML += '<span style = "writing-mode: vertical-rl; text-orientation: mixed;margin-right: 12px; margin-top: 2px;" >' +  mn + '</span>'
+                            mn += 1;
                         }
+                        div.innerHTML += '<span style = "margin-right: 12px; margin-top: 2px;" >m/s </span>'
                         return div;
                     };
                     legendEolic.onRemove = function (map){
@@ -445,7 +452,13 @@ export default {
 #map {
     width: 100%;
 }
-
+.rotateimg90 {
+  -webkit-transform:rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
 /*
 #map.mode-create {
     cursor: crosshair !important;
