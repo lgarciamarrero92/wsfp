@@ -48,9 +48,14 @@ export default {
             subdomains:['mt0','mt1','mt2','mt3']
         });
 
-        var tiles = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=2cf458ad-eab8-465d-95dd-7b7d2f098322', {
-            maxZoom: 18,
-            attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+        //var mqi = L.tileLayer("http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png", {subdomains: ['otile1','otile2','otile3','otile4']});
+
+        var tiles =  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+                attribution: '©OpenStreetMap, ©CartoDB'
+        })
+        
+        var labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
+                attribution: '©OpenStreetMap, ©CartoDB',
         })
 
         const solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif', {
@@ -62,7 +67,11 @@ export default {
                 displayMax: 2000,
             })
         })
-      
+        let legendSolar = null
+        let legendEolic = null
+        solar.on('load',()=>{
+            
+        })
         const eolic = new L.leafletGeotiff('CUB_wind-speed_50m.tif', {
             opacity: .1,
             renderer: new L.LeafletGeotiff.Plotty({
@@ -75,12 +84,17 @@ export default {
             
         })
         
+        var southWest = L.latLng(23.1886107447, -74.1780248685),
+        northEast = L.latLng(19.8554808619, -84.9749110583),
+        bounds = L.latLngBounds(southWest, northEast);
+        
         this.map = L.map('map', {
-            center: [0,0], 
-            zoom: 2, 
-            layers: [googleSat]
+            center: bounds.getCenter(), 
+            zoom: 6.4, 
+            minZoom: 6.4,
+            layers: [googleSat,labels]
         });
-
+        this.map.setMaxBounds(bounds);
         var baseMaps = {
             "Satellite": googleSat,
             "Streets": tiles,
@@ -89,11 +103,57 @@ export default {
         };
 
         var overlayMaps = {
-            
+            'Labels': labels
         };
 
         this.map.on('baselayerchange', (e) => {
             this.layerActive = e.name
+            if(this.layerActive == "Eolic" || this.layerActive == "Solar"){
+                this.disableMap()
+                if( this.layerActive == "Solar" ){
+                    if(legendEolic)
+                        this.map.removeControl(legendEolic)
+                    legendSolar = L.control({position: 'bottomleft'});
+                    legendSolar.onAdd = function (map) {
+                        const div = L.DomUtil.create('div','solar legend');
+                        div.innerHTML += '<img id="colorScaleImage" src=' + solar.options.renderer.colorScaleData + " style='vertical-align: middle; height:20px; width:300px;'/>";
+                        div.innerHTML += '<br>'
+                        for (let index = 0; index < 10; index++) {
+                            //div.innerHTML += '<span style = "margin-right: 20px;" > 2 </span>'
+                        }
+                        return div;
+                    };
+                    legendSolar.onRemove = function (map){
+                        let div = L.DomUtil.remove('solar legend');
+                        return ;
+                    };
+                    legendSolar.addTo(this.map)
+                }else{
+                    if(legendSolar)
+                        this.map.removeControl(legendSolar)
+                    legendEolic = L.control({position: 'bottomleft'});
+                    legendEolic.onAdd = function (map) {
+                        const div = L.DomUtil.create('div','eolic legend');
+                        div.innerHTML += '<img id="colorScaleImage" src=' + eolic.options.renderer.colorScaleData + " style='vertical-align: middle; height:20px; width:300px;'/>";
+                        div.innerHTML += '<br>'
+                        for (let index = 0; index < 10; index++) {
+                            //div.innerHTML += '<span style = "margin-right: 20px;" > 2 </span>'
+                        }
+                        return div;
+                    };
+                    legendEolic.onRemove = function (map){
+                        let div = L.DomUtil.remove('eolic legend');
+                        return ;
+                    };
+                    legendEolic.addTo(this.map)
+                }
+            }else{
+                if(legendEolic)
+                        this.map.removeControl(legendEolic)
+                if(legendSolar)
+                        this.map.removeControl(legendSolar)
+                this.enableMap()
+            }
         });
 
         this.map.on('click',(e)=>{
@@ -163,7 +223,7 @@ export default {
 
         this.map.addControl(drawControl);
 
-        this.map.on(L.Draw.Event.CREATED, function (e) {
+        this.map.on(L.Draw.Event.CREATED, (e) => {
             var type = e.layerType
             var layer = e.layer;
             drawnItems.addLayer(layer);
@@ -186,13 +246,15 @@ export default {
             }
             */
             //console.log(pointOnPolygon)
-            layer.on('click',function(){
-                vm.typeOfFigure = type;
-                var centroid = turf.centroid(polygon)
-                vm.centroid = centroid.geometry.coordinates
-                Vue.nextTick( function () {
-                    vm.$bvModal.show('modal-center')
-                })
+            layer.on('click', () => {
+                if(this.layerActive != 'Solar' && this.layerActive != 'Eolic'){
+                    vm.typeOfFigure = type;
+                    var centroid = turf.centroid(polygon)
+                    vm.centroid = centroid.geometry.coordinates
+                    Vue.nextTick( function () {
+                        vm.$bvModal.show('modal-center')
+                    })
+                }
             });
         });
 
@@ -251,6 +313,16 @@ export default {
         */
     },
     methods: {
+        disableMap(){
+            this.map._handlers.forEach(function(handler) {
+                handler.disable();
+            });
+        },
+        enableMap(){
+            this.map._handlers.forEach(function(handler) {
+                handler.enable();
+            });
+        },
         generatePositions(polygon, angle){
             var initialPoint = turf.centroid(polygon)
             var queue = []
