@@ -23,6 +23,7 @@ Vue.use(BootstrapVue)
 
 Vue.component('example-component', require('./components/ExampleComponent.vue').default);
 Vue.component('map-component', require('./components/MapComponent.vue').default);
+Vue.component('control-panel-component', require('./components/ControlPanelComponent.vue').default);
 Vue.component('location-details-modal', require('./components/LocationDetailsModalComponent.vue').default);
 
 /**

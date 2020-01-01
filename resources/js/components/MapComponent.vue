@@ -1,7 +1,7 @@
 
 <template>
     <div class = "w-100">
-        <div id = "map" style = "height: 500px;" >
+        <div id = "map" style = "height: 70vh;" >
         </div>
         <location-details-modal :type="typeOfFigure" :centroid = "centroid">
         </location-details-modal>
@@ -31,11 +31,42 @@ export default {
             map: null,
             typeOfFigure: null,
             centroid: null,
-            layerActive: 'Satellite'
+            layerActive: 'Satellite',
+            isDrawing: false
         }
     },
     mounted() {
+        //Test linear solver
+        var solver = require("javascript-lp-solver/src/solver"),
+        results,
+        model = {
+            "optimize": "capacity",
+            "opType": "max",
+            "constraints": {
+                "c1": {"max": 100},
+                "c2": {"max": 30},
+                "c3": {"max": 50}
+            },
+            "variables": {
+                "x": {
+                    "capacity": 20,
+                    "c1": 10,
+                    "c2": 1,
+                    "c3": 0
+                },
+                "y": {
+                    "capacity": 30,
+                    "c1": 1,
+                    "c2": 0,
+                    "c3": 1
+                }
+            },
+            "ints": {"x": 1, "y": 1}
+        };
 
+        results = solver.Solve(model);
+        console.log(results);
+        //end test
         let vm = this
         
         var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
@@ -88,13 +119,15 @@ export default {
         northEast = L.latLng(19.8554808619, -84.9749110583),
         bounds = L.latLngBounds(southWest, northEast);
         
-        this.map = L.map('map', {
+        Vue.prototype.$map = L.map('map', {
             center: bounds.getCenter(), 
             zoom: 6.4, 
             minZoom: 6.4,
             layers: [googleSat,labels]
         });
-        this.map.setMaxBounds(bounds);
+
+        Vue.prototype.$map.setMaxBounds(bounds);
+
         var baseMaps = {
             "Satellite": googleSat,
             "Streets": tiles,
@@ -106,13 +139,13 @@ export default {
             'Labels': labels
         };
 
-        this.map.on('baselayerchange', (e) => {
+        Vue.prototype.$map.on('baselayerchange', (e) => {
             this.layerActive = e.name
             if(this.layerActive == "Eolic" || this.layerActive == "Solar"){
                 this.disableMap()
                 if( this.layerActive == "Solar" ){
                     if(legendEolic)
-                        this.map.removeControl(legendEolic)
+                        Vue.prototype.$map.removeControl(legendEolic)
                     legendSolar = L.control({position: 'bottomleft'});
                     legendSolar.onAdd = function (map) {
                         const div = L.DomUtil.create('div','solar legend');
@@ -131,10 +164,10 @@ export default {
                         let div = L.DomUtil.remove('solar legend');
                         return ;
                     };
-                    legendSolar.addTo(this.map)
+                    legendSolar.addTo(Vue.prototype.$map)
                 }else{
                     if(legendSolar)
-                        this.map.removeControl(legendSolar)
+                        Vue.prototype.$map.removeControl(legendSolar)
                     legendEolic = L.control({position: 'bottomleft'});
                     legendEolic.onAdd = function (map) {
                         const div = L.DomUtil.create('div','eolic legend');
@@ -152,34 +185,34 @@ export default {
                         let div = L.DomUtil.remove('eolic legend');
                         return ;
                     };
-                    legendEolic.addTo(this.map)
+                    legendEolic.addTo(Vue.prototype.$map)
                 }
             }else{
                 if(legendEolic)
-                        this.map.removeControl(legendEolic)
+                        Vue.prototype.$map.removeControl(legendEolic)
                 if(legendSolar)
-                        this.map.removeControl(legendSolar)
+                        Vue.prototype.$map.removeControl(legendSolar)
                 this.enableMap()
             }
         });
 
-        this.map.on('click',(e)=>{
-            if(this.layerActive == 'Solar'){
+        Vue.prototype.$map.on('click',(e)=>{
+            if(this.layerActive == 'Solar' && this.isDrawing == false){
                 L.popup()
                     .setLatLng(e.latlng)
                     .setContent("Photovoltaic power output: " + solar.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " kWh/kWp" )
-                    .openOn(this.map)
-            }else if(this.layerActive == 'Eolic'){
+                    .openOn(Vue.prototype.$map)
+            }else if(this.layerActive == 'Eolic' && this.isDrawing == false){
                 L.popup()
                     .setLatLng(e.latlng)
                     .setContent("Wind velocity: " + eolic.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " m/s" )
-                    .openOn(this.map) 
+                    .openOn(Vue.prototype.$map) 
             }
         })
 
         
 
-        L.control.layers(baseMaps, overlayMaps).addTo(this.map);
+        L.control.layers(baseMaps, overlayMaps).addTo(Vue.prototype.$map);
 
         const provider = new OpenStreetMapProvider();
 
@@ -188,11 +221,11 @@ export default {
             provider: provider,
         })
 
-        this.map.addControl(searchControl);
+        Vue.prototype.$map.addControl(searchControl);
 
-        var drawnItems = new L.FeatureGroup();
+        Vue.prototype.$drawnItems = new L.FeatureGroup();
 
-        this.map.addLayer(drawnItems);
+        Vue.prototype.$map.addLayer(Vue.prototype.$drawnItems);
 
         var options = {
             position: 'topright',
@@ -220,7 +253,7 @@ export default {
                 }
             },
             edit: {
-                featureGroup: drawnItems, //REQUIRED!!
+                featureGroup: Vue.prototype.$drawnItems, //REQUIRED!!
             }
         };
 
@@ -228,12 +261,27 @@ export default {
             options
         );
 
-        this.map.addControl(drawControl);
+        Vue.prototype.$map.addControl(drawControl);
 
-        this.map.on(L.Draw.Event.CREATED, (e) => {
+        Vue.prototype.$map.on(L.Draw.Event.DRAWSTART, (e) => {
+            this.isDrawing = true
+        })
+        Vue.prototype.$map.on(L.Draw.Event.EDITSTART, (e) => {
+            this.isDrawing = true
+        })
+
+        Vue.prototype.$map.on(L.Draw.Event.DRAWSTOP, (e) => {
+            this.isDrawing = false
+        })
+        Vue.prototype.$map.on(L.Draw.Event.EDITSTOP, (e) => {
+            this.isDrawing = false
+        })
+
+        Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
             var type = e.layerType
             var layer = e.layer;
-            drawnItems.addLayer(layer);
+            Vue.prototype.$drawnItems.addLayer(layer);
+            console.log(Vue.prototype.$drawnItems)
             var polygon = layer.toGeoJSON();
             //var points1 = vm.generatePositions(polygon,45)
             //var points = turf.featureCollection(points1)
@@ -267,7 +315,7 @@ export default {
 
         /*
         const freeDraw = new FreeDraw({ mode: NONE });
-        this.map.addLayer(freeDraw);
+        Vue.prototype.$map.addLayer(freeDraw);
         freeDraw.on('markers', event => {
             console.log(event)
             var polygon = L.polygon(event.latLngs[0])
@@ -295,7 +343,7 @@ export default {
                     btn.state('edit');
                 }
             }]
-        }).addTo( this.map );
+        }).addTo( Vue.prototype.$map );
 
         var addDetailsButton = L.easyButton({
             id: 'add-details',
@@ -316,17 +364,17 @@ export default {
                     btn.state('add-details');
                 }
             }]
-        }).addTo( this.map );
+        }).addTo( Vue.prototype.$map );
         */
     },
     methods: {
         disableMap(){
-            this.map._handlers.forEach(function(handler) {
+            Vue.prototype.$map._handlers.forEach(function(handler) {
                 handler.disable();
             });
         },
         enableMap(){
-            this.map._handlers.forEach(function(handler) {
+            Vue.prototype.$map._handlers.forEach(function(handler) {
                 handler.enable();
             });
         },
@@ -363,7 +411,7 @@ export default {
                         y: item.y
                     })
                     if( turf.booleanPointInPolygon(rigth, polygon) ){
-                        //L.geoJSON(rigth).addTo(this.map);
+                        //L.geoJSON(rigth).addTo(Vue.prototype.$map);
                         queue.push({
                             p: rigth,
                             x: item.x+1,
@@ -384,7 +432,7 @@ export default {
                         y: item.y
                     })
                     if( turf.booleanPointInPolygon(left, polygon) ){
-                        //L.geoJSON(left).addTo(this.map);
+                        //L.geoJSON(left).addTo(Vue.prototype.$map);
                         queue.push({
                             p: left,
                             x: item.x-1,
@@ -405,7 +453,7 @@ export default {
                         y: item.y+1
                     })
                     if( turf.booleanPointInPolygon(up, polygon) ){
-                        //L.geoJSON(up).addTo(this.map);
+                        //L.geoJSON(up).addTo(Vue.prototype.$map);
                         queue.push({
                             p: up,
                             x: item.x,
@@ -426,7 +474,7 @@ export default {
                         y: item.y-1
                     })
                     if( turf.booleanPointInPolygon(down, polygon) ){
-                        //L.geoJSON(down).addTo(this.map);
+                        //L.geoJSON(down).addTo(Vue.prototype.$map);
                         queue.push({
                             p: down,
                             x: item.x,

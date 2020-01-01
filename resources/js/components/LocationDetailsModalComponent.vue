@@ -13,12 +13,12 @@
     <template slot="modal-footer" slot-scope="{ ok, cancel }">
         <b-button variant="secondary" :disabled="isBusy" @click="cancel()">Cancel</b-button>
         <b-button variant="primary" :disabled="isBusy" @click="ok()">
-        <template v-if="!isBusy">Save</template>
-        <template v-if="isBusy">
-            <b-spinner small></b-spinner>
-            <span class="ml-2">Saving...</span>
-        </template>
-      </b-button>
+            <template v-if="!isBusy">Save</template>
+            <template v-if="isBusy">
+                <b-spinner small></b-spinner>
+                <span class="ml-2">Saving...</span>
+            </template>
+        </b-button>
     </template>
     
     <div id = "form" class = "container" >
