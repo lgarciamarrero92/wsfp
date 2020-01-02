@@ -36,7 +36,7 @@
                 </div>
                 <b-alert v-else show variant="info"> Draw an area in Map for start!!</b-alert>
             </b-tab>
-            <b-tab title="Results"><b-card-text>Is coming...</b-card-text></b-tab>
+            <b-tab title="Results"><b-card-text>Is coming....</b-card-text></b-tab>
             <b-tab title="Custom data" disabled><b-card-text>Tab contents 3</b-card-text></b-tab>
         </b-tabs>
     </b-card>
