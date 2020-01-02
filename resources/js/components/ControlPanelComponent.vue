@@ -16,7 +16,7 @@
                                 </h5>
                                 <h5>
                                     <b-badge variant="primary">
-                                        Solar potential: 
+                                        Mean solar potential: 
                                         <span v-html="solarPotential(item)">
                                             
                                         </span>
@@ -24,8 +24,8 @@
                                 </h5>
                                 <h5>
                                     <b-badge variant="primary">
-                                        Wind velocity: 
-                                        <span v-html="windVelocity(item)">
+                                        Mean wind potential: 
+                                        <span v-html="windPotential(item)">
                                             
                                         </span>
                                     </b-badge>
@@ -36,7 +36,7 @@
                 </div>
                 <b-alert v-else show variant="info"> Draw an area in Map for start!!</b-alert>
             </b-tab>
-            <b-tab title="Results"><b-card-text>Tab contents 2</b-card-text></b-tab>
+            <b-tab title="Results"><b-card-text>Is coming...</b-card-text></b-tab>
             <b-tab title="Custom data" disabled><b-card-text>Tab contents 3</b-card-text></b-tab>
         </b-tabs>
     </b-card>
@@ -55,7 +55,7 @@
         },
         mounted() {
             this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
-            this.eolic = new L.leafletGeotiff('CUB_wind-speed_50m.tif')
+            this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
 
             Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
                 this.update()
@@ -98,9 +98,9 @@
                 var centroid = this.centroid(item)
                 return `${this.solar.getValueAtLatLng(centroid.geometry.coordinates[1],centroid.geometry.coordinates[0]).toFixed(2)} kWh/m<sup>2</sup>`
             },
-            windVelocity(item){
+            windPotential(item){
                 var centroid = this.centroid(item)
-                return `${this.eolic.getValueAtLatLng(centroid.geometry.coordinates[1],centroid.geometry.coordinates[0]).toFixed(2)} m/s`
+                return `${(this.eolic.getValueAtLatLng(centroid.geometry.coordinates[1],centroid.geometry.coordinates[0])*8.760).toFixed(2)} kWh/m<sup>2</sup>`
             }
         }
     }

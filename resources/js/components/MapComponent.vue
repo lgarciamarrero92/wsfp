@@ -25,7 +25,9 @@ import 'leaflet-geotiff/leaflet-geotiff-plotty';
 //import 'esri-leaflet'
 //import 'esri-leaflet-geocoder'
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
+
 export default {
+    
     data () {
         return {
             map: null,
