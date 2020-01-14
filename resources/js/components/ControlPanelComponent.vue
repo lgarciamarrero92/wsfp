@@ -43,7 +43,7 @@
                                 >
                                     <template v-slot:button-content >
                                         <img 
-                                            src="icon_eolic.png" 
+                                            src="icon_solar.png" 
                                             style="width: 30px; height: 30px;"
                                         >
                                     </template>
