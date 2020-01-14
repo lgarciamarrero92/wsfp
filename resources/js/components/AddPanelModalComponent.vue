@@ -153,7 +153,7 @@ export default {
         onSave(){
             this.busy = true
             if(!this.isEdited){
-                axios.post('/solar_panel',this.form).then( () =>{
+                axios.post('/solar_panels',this.form).then( () =>{
                     this.resetForm()
                     this.$root.$emit('bv::refresh::table','solar-table')
                     this.$bvToast.toast( 'Data saved successfully',{
@@ -169,7 +169,7 @@ export default {
                     this.busy = false;
                 })
             }else{
-                axios.put(`/solar_panel/${this.idEdited}`,this.form).then( () =>{
+                axios.put(`/solar_panels/${this.idEdited}`,this.form).then( () =>{
                     this.resetForm()
                     this.$bvModal.hide('add-panel')
                     this.$root.$emit('bv::refresh::table','solar-table')
@@ -223,7 +223,7 @@ export default {
             this.isEdited = true
             this.idEdited = id
             this.busy = true
-            axios.get(`/solar_panel/${id}`).then( (response) => {
+            axios.get(`/solar_panels/${id}`).then( (response) => {
                 this.form.model = response.data.model
                 this.form.height=response.data.height
                 this.form.width=response.data.width

@@ -8,55 +8,84 @@
                     <b-card no-body>
                         <b-tabs pills card>
                             <b-tab v-for="(item,index) in zoneID" :key = index :title='"Zone " + (index+1)' @click="zoomZone(item)" >
-                                <h5>
-                                    <b-badge variant="primary">
-                                        Area: 
-                                        <span v-html="convert(area[item])">
-                                            
-                                        </span>
-                                    </b-badge>
-                                </h5>
-                                <h5>
-                                    <b-badge variant="primary">
-                                        Mean solar potential: 
-                                        <span v-html="solarPot[item]">
-                                            
-                                        </span>
-                                    </b-badge>
-                                </h5>
-                                <h5>
-                                    <b-badge variant="primary">
-                                        Mean wind potential: 
-                                        <span v-html="eolicPot[item]">
-                                            
-                                        </span>
-                                    </b-badge>
-                                </h5>
-
-                                <b-dropdown 
-                                    id="solar" 
-                                    no-caret 
-                                    lazy 
-                                    variant="link" 
-                                    v-b-tooltip.hover 
-                                    title="Solar panels to be considered in this zone"
-                                >
-                                    <template v-slot:button-content >
-                                        <img 
-                                            src="icon_solar.png" 
-                                            style="width: 30px; height: 30px;"
+                                <div class="row">
+                                    <div class="col-7">
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Area: 
+                                                <span v-html="convert(area[item])">
+                                                    
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Mean solar potential: 
+                                                <span v-html="solarPot[item]">
+                                                    
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Mean wind potential: 
+                                                <span v-html="eolicPot[item]">
+                                                    
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                    </div>
+                                    <div class="col-5 text-center">
+                                        <b-dropdown 
+                                        class="w-100"
+                                            id="solar" 
+                                            no-caret 
+                                            lazy 
+                                            variant="link" 
+                                            v-b-tooltip.hover 
+                                            title="Solar panels to be considered in this zone"
                                         >
-                                    </template>
-                                    <b-dropdown-form>
-                                        <div v-if="dropDownBusy" class = "text-center">
-                                            <b-spinner small variant="primary" ></b-spinner>
-                                        </div>
-                                        <b-form-checkbox-group v-if="!dropDownBusy" v-model="solarPanelsSelected[item]" :options="solarPanels">
+                                            <template v-slot:button-content >
+                                                <img 
+                                                    src="icon_solar.png" 
+                                                    style="width: 30px; height: 30px;"
+                                                >
+                                            </template>
+                                            <b-dropdown-form>
+                                                <div v-if="dropDownBusy" class = "text-center">
+                                                    <b-spinner small variant="primary" ></b-spinner>
+                                                </div>
+                                                <b-form-checkbox-group v-if="!dropDownBusy" v-model="solarPanelsSelected[item]" :options="solarPanels">
 
-                                        </b-form-checkbox-group>
-                                    </b-dropdown-form>
-                                </b-dropdown>
-                                
+                                                </b-form-checkbox-group>
+                                            </b-dropdown-form>
+                                        </b-dropdown>
+
+                                        <b-dropdown 
+                                            id="eolic" 
+                                            no-caret 
+                                            lazy 
+                                            variant="link" 
+                                            v-b-tooltip.hover 
+                                            title="Wind turbines to be considered in this zone"
+                                        >
+                                            <template v-slot:button-content >
+                                                <img 
+                                                    src="icon_eolic.jpg" 
+                                                    style="width: 30px; height: 30px;"
+                                                >
+                                            </template>
+                                            <b-dropdown-form>
+                                                <div v-if="dropDownBusy" class = "text-center">
+                                                    <b-spinner small variant="primary" ></b-spinner>
+                                                </div>
+                                                <b-form-checkbox-group v-if="!dropDownBusy" v-model="windTurbinesSelected[item]" :options="windTurbines">
+
+                                                </b-form-checkbox-group>
+                                            </b-dropdown-form>
+                                        </b-dropdown>
+                                    </div>
+                                </div>
                             </b-tab>
                         </b-tabs>
                     </b-card>
@@ -87,6 +116,8 @@
             return {
                 solarPanelsSelected: {},
                 solarPanels: [],
+                windTurbinesSelected: {},
+                windTurbines: [],
                 dropDownBusy: false,
                 zoneID: [],
                 distributions: {},
@@ -94,7 +125,11 @@
                 eolicPot: {},
                 area: {},
                 solar: null,
-                eolic: null
+                eolic: null,
+                cfiec1: null,
+                cfiec2: null,
+                cfiec3: null,
+                pvout: null
             }
         },
         props:{
@@ -103,14 +138,23 @@
             Vue.prototype.$user_id = this.user_id
         },
         mounted() {
+            
             this.$root.$on('bv::dropdown::show', evt => {
                 if(evt.componentId == "solar"){
                     this.getSolarPanels()
                 }
+                if(evt.componentId == "eolic"){
+                    this.getWindTurbines()
+                }
             })
+
             this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
             this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
-
+            this.cfiec1 = new L.leafletGeotiff('CUB_capacity-factor_IEC1.tif')
+            this.cfiec2 = new L.leafletGeotiff('CUB_capacity-factor_IEC2.tif')
+            this.cfiec3 = new L.leafletGeotiff('CUB_capacity-factor_IEC3.tif')
+            this.pvoutput = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif')
+            
             Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
                 console.log(e)
                 var id = e.layer._leaflet_id
@@ -143,14 +187,29 @@
             })
         },
         methods: {
+            getWindCoef(turbine,locationId){
+                
+            },
             getSolarPanels(){
                 this.dropDownBusy = true
-                return axios.get('/solar_panel').then( (response) => {
+                return axios.get('/solar_panels').then( (response) => {
                     let items = []
                     response.data.forEach(element => {
                         items.push({value: element.id, text: element.model}) 
                     });
                     this.solarPanels = items
+                    this.dropDownBusy = false
+                    return items;
+                })
+            },
+            getWindTurbines(){
+                this.dropDownBusy = true
+                return axios.get('/wind_turbines').then( (response) => {
+                    let items = []
+                    response.data.forEach(element => {
+                        items.push({value: element.id, text: element.model}) 
+                    });
+                    this.windTurbines = items
                     this.dropDownBusy = false
                     return items;
                 })

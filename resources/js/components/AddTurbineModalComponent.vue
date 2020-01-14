@@ -62,6 +62,26 @@
 
             <b-form-group
                 class="col-6"
+                id="iec-class-group"
+                label="IEC class:"
+            >
+                <b-form-select
+                    id = "iec-class"
+                    :disabled="isBusy"
+                    :state="!form.validated?null:form.errors.iec_class == undefined"
+                    v-model="form.iec_class"
+                    :options="[{value: null,text: 'Select iec class'},{value: 1,text:'IEC 1'},{value: 2,text:'IEC 2'},{value: 3,text:'IEC 3'}]"
+                    required
+                >
+                    
+                </b-form-select>
+                <b-form-invalid-feedback :force-show="form.errors.iec_class != undefined" v-for="(item,index) in form.errors.iec_class" :key = index>
+                    {{item}}
+                </b-form-invalid-feedback>
+            </b-form-group>
+
+            <b-form-group
+                class="col-6"
                 id="rotor-diameter-group"
                 label="Rotor diameter (m):"
             >
@@ -114,6 +134,7 @@ export default {
             form: {
                 model: null,
                 rotor_diameter: null,
+                iec_class: null,
                 invest_cost: null,
                 nominal_power: null,
                 errors: {},
@@ -132,7 +153,7 @@ export default {
         onSave(){
             this.busy = true
             if(!this.isEdited){
-                axios.post('/wind_turbine',this.form).then( () =>{
+                axios.post('/wind_turbines',this.form).then( () =>{
                     this.resetForm()
                     this.$root.$emit('bv::refresh::table','wind-table')
                     this.$bvToast.toast( 'Data saved successfully',{
@@ -148,7 +169,7 @@ export default {
                     this.busy = false;
                 })
             }else{
-                axios.put(`/wind_turbine/${this.idEdited}`,this.form).then( () =>{
+                axios.put(`/wind_turbines/${this.idEdited}`,this.form).then( () =>{
                     this.resetForm()
                     this.$bvModal.hide('add-turbine')
                     this.$root.$emit('bv::refresh::table','wind-table')
@@ -170,6 +191,7 @@ export default {
             this.busy = false
             this.isEdited = false
             this.idEdited = null
+            this.form.iec_class = null
             this.form.rotor_diameter= null
             this.form.model = null
             this.form.invest_cost= null
@@ -201,11 +223,12 @@ export default {
             this.isEdited = true
             this.idEdited = id
             this.busy = true
-            axios.get(`/wind_turbine/${id}`).then( (response) => {
+            axios.get(`/wind_turbines/${id}`).then( (response) => {
                 this.form.model = response.data.model
                 this.form.rotor_diameter=response.data.rotor_diameter
                 this.form.invest_cost=response.data.invest_cost
                 this.form.nominal_power= response.data.nominal_power
+                this.form.iec_class= response.data.iec_class
                 this.busy = false
             }).catch( (e)=>{
 

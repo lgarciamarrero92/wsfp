@@ -54,7 +54,7 @@ export default {
     },
     methods: {
         getItems(ctx){
-            return axios.get(`/solar_panel?page=${ctx.currentPage}&perPage=${ctx.perPage}`).then( response => {
+            return axios.get(`/solar_panels?page=${ctx.currentPage}&perPage=${ctx.perPage}`).then( response => {
                 this.totalRows = response.data.total;
                 return response.data.data;
             }).catch(e=>{
@@ -81,7 +81,7 @@ export default {
             )
             .then( value => {
                 if (value) {
-                    axios.delete(`/solar_panel/${item.id}`)
+                    axios.delete(`/solar_panels/${item.id}`)
                     .then(response => {
                         this.$refs.solarTable.refresh();
                         this.$bvToast.toast( 'Data deleted successfully',{

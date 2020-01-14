@@ -51,7 +51,7 @@ export default {
     },
     methods: {
         getItems(ctx){
-            return axios.get(`/wind_turbine?page=${ctx.currentPage}&perPage=${ctx.perPage}`).then( response => {
+            return axios.get(`/wind_turbines?page=${ctx.currentPage}&perPage=${ctx.perPage}`).then( response => {
                 this.totalRows = response.data.total;
                 return response.data.data;
             }).catch(e=>{
@@ -78,7 +78,7 @@ export default {
             )
             .then( value => {
                 if (value) {
-                    axios.delete(`/wind_turbine/${item.id}`)
+                    axios.delete(`/wind_turbines/${item.id}`)
                     .then(response => {
                         this.$refs.windTable.refresh();
                         this.$bvToast.toast( 'Data deleted successfully',{
