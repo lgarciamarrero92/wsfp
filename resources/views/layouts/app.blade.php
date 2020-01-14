@@ -27,7 +27,7 @@
 <body>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
-            <div class="container">
+            <div class="container-fluid">
                 <a class="navbar-brand" href="{{ url('/') }}">
                     <img src="/images/logo.jpg" style = "max-height: 100px;">
                     <img src="/images/logo_EU.jpg" style = "max-height: 100px;">

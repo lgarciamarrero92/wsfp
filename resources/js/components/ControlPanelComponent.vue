@@ -1,5 +1,7 @@
 <template>
-    <b-card no-body>
+    <b-card 
+        no-body
+    >
         <b-tabs card>
             <b-tab title="Zones" active>
                 <div v-if="zoneID.length > 0" >
@@ -30,6 +32,31 @@
                                         </span>
                                     </b-badge>
                                 </h5>
+
+                                <b-dropdown 
+                                    id="solar" 
+                                    no-caret 
+                                    lazy 
+                                    variant="link" 
+                                    v-b-tooltip.hover 
+                                    title="Solar panels to be considered in this zone"
+                                >
+                                    <template v-slot:button-content >
+                                        <img 
+                                            src="icon_eolic.png" 
+                                            style="width: 30px; height: 30px;"
+                                        >
+                                    </template>
+                                    <b-dropdown-form>
+                                        <div v-if="dropDownBusy" class = "text-center">
+                                            <b-spinner small variant="primary" ></b-spinner>
+                                        </div>
+                                        <b-form-checkbox-group v-if="!dropDownBusy" v-model="solarPanelsSelected[item]" :options="solarPanels">
+
+                                        </b-form-checkbox-group>
+                                    </b-dropdown-form>
+                                </b-dropdown>
+                                
                             </b-tab>
                         </b-tabs>
                     </b-card>
@@ -37,8 +64,18 @@
                 <b-alert v-else show variant="info"> Draw an area in Map for start!!</b-alert>
             </b-tab>
             <b-tab title="Results"><b-card-text>Is coming....</b-card-text></b-tab>
-            <b-tab title="Custom data" disabled><b-card-text>Tab contents 3</b-card-text></b-tab>
+            <b-tab title="Solar panels">
+                <solar-table />
+            </b-tab>
+            <b-tab title="Wind turbines">
+                <wind-table />
+            </b-tab>
         </b-tabs>
+        <b-card-footer>
+            <b-button variant="primary" @click="$bvModal.show('add-panel')"> Add solar panel</b-button>
+            <b-button variant="primary" @click="$bvModal.show('add-turbine')"> Add eolic turbine</b-button>
+            <b-button variant="primary"> Run simulations</b-button>
+        </b-card-footer>
     </b-card>
 </template>
 
@@ -48,6 +85,9 @@
     export default {
         data () {
             return {
+                solarPanelsSelected: {},
+                solarPanels: [],
+                dropDownBusy: false,
                 zoneID: [],
                 distributions: {},
                 solarPot: {},
@@ -57,7 +97,17 @@
                 eolic: null
             }
         },
+        props:{
+        },
+        created(){
+            Vue.prototype.$user_id = this.user_id
+        },
         mounted() {
+            this.$root.$on('bv::dropdown::show', evt => {
+                if(evt.componentId == "solar"){
+                    this.getSolarPanels()
+                }
+            })
             this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
             this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
 
@@ -72,9 +122,10 @@
                 var edit = Object.keys(e.layers._layers)
                 this.zoneID = Object.keys(Vue.prototype.$drawnItems._layers)
                 for(var i = 0 ; i < edit.length ; i++ ){
-                    for(var j = 0 ; j < this.distributions[edit[i]].length; j++ ){
-                        this.distributions[edit[i]][j].removeFrom(Vue.prototype.$map)
-                    }
+                    if(this.distributions[edit[i]])
+                        for(var j = 0 ; j < this.distributions[edit[i]].length; j++ ){
+                            this.distributions[edit[i]][j].removeFrom(Vue.prototype.$map)
+                        }
                     this.update(edit[i])
                 }
                 
@@ -83,14 +134,27 @@
             Vue.prototype.$map.on(L.Draw.Event.DELETED, (e) => {
                 var del = Object.keys(e.layers._layers)
                 for(var i = 0 ; i < del.length ; i++ ){
-                    for(var j = 0 ; j < this.distributions[del[i]].length; j++ ){
-                        this.distributions[del[i]][j].removeFrom(Vue.prototype.$map)
-                    }
+                    if(this.distributions[del[i]])
+                        for(var j = 0 ; j < this.distributions[del[i]].length; j++ ){
+                            this.distributions[del[i]][j].removeFrom(Vue.prototype.$map)
+                        }
                 }
                 this.zoneID = Object.keys(Vue.prototype.$drawnItems._layers)
             })
         },
         methods: {
+            getSolarPanels(){
+                this.dropDownBusy = true
+                return axios.get('/solar_panel').then( (response) => {
+                    let items = []
+                    response.data.forEach(element => {
+                        items.push({value: element.id, text: element.model}) 
+                    });
+                    this.solarPanels = items
+                    this.dropDownBusy = false
+                    return items;
+                })
+            },
             update(item){
                 this.area[item] = this.calcArea(item)
                 this.solarPot[item] = this.solarPotential(item);
