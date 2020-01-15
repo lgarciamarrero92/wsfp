@@ -35,55 +35,57 @@
                                             </b-badge>
                                         </h5>
                                     </div>
-                                    <div class="col-5 text-center">
-                                        <b-dropdown 
-                                        class="w-100"
-                                            id="solar" 
-                                            no-caret 
-                                            lazy 
-                                            variant="link" 
-                                            v-b-tooltip.hover 
-                                            title="Solar panels to be considered in this zone"
-                                        >
-                                            <template v-slot:button-content >
-                                                <img 
-                                                    src="icon_solar.png" 
-                                                    style="width: 30px; height: 30px;"
-                                                >
-                                            </template>
-                                            <b-dropdown-form>
-                                                <div v-if="dropDownBusy" class = "text-center">
-                                                    <b-spinner small variant="primary" ></b-spinner>
-                                                </div>
-                                                <b-form-checkbox-group v-if="!dropDownBusy" v-model="solarPanelsSelected[item]" :options="solarPanels">
+                                    <div class="col-5 ">
+                                        <div class = "row">
+                                            <b-dropdown 
+                                                id="solar" 
+                                                no-caret 
+                                                lazy 
+                                                variant="link" 
+                                                v-b-tooltip.hover 
+                                                title="Solar panels to be considered in this zone"
+                                            >
+                                                <template v-slot:button-content >
+                                                    <img 
+                                                        src="icon_solar.png" 
+                                                        style="width: 30px; height: 30px;"
+                                                    >
+                                                </template>
+                                                <b-dropdown-form>
+                                                    <div v-if="dropDownBusy" class = "text-center">
+                                                        <b-spinner small variant="primary" ></b-spinner>
+                                                    </div>
+                                                    <b-form-checkbox-group v-if="!dropDownBusy" v-model="solarPanelsSelected[item]" :options="solarPanels">
 
-                                                </b-form-checkbox-group>
-                                            </b-dropdown-form>
-                                        </b-dropdown>
+                                                    </b-form-checkbox-group>
+                                                </b-dropdown-form>
+                                            </b-dropdown>
+                                        </div>
+                                        <div class="row">
+                                            <b-dropdown 
+                                                id="eolic" 
+                                                no-caret 
+                                                lazy 
+                                                variant="link" 
+                                                v-b-tooltip.hover 
+                                                title="Wind turbines to be considered in this zone"
+                                            >
+                                                <template v-slot:button-content >
+                                                    <img 
+                                                        src="icon_eolic.png" 
+                                                        style="width: 30px; height: 30px;"
+                                                    >
+                                                </template>
+                                                <b-dropdown-form>
+                                                    <div v-if="dropDownBusy" class = "text-center">
+                                                        <b-spinner small variant="primary" ></b-spinner>
+                                                    </div>
+                                                    <b-form-checkbox-group v-if="!dropDownBusy" v-model="windTurbinesSelected[item]" :options="windTurbines">
 
-                                        <b-dropdown 
-                                            id="eolic" 
-                                            no-caret 
-                                            lazy 
-                                            variant="link" 
-                                            v-b-tooltip.hover 
-                                            title="Wind turbines to be considered in this zone"
-                                        >
-                                            <template v-slot:button-content >
-                                                <img 
-                                                    src="icon_eolic.jpg" 
-                                                    style="width: 30px; height: 30px;"
-                                                >
-                                            </template>
-                                            <b-dropdown-form>
-                                                <div v-if="dropDownBusy" class = "text-center">
-                                                    <b-spinner small variant="primary" ></b-spinner>
-                                                </div>
-                                                <b-form-checkbox-group v-if="!dropDownBusy" v-model="windTurbinesSelected[item]" :options="windTurbines">
-
-                                                </b-form-checkbox-group>
-                                            </b-dropdown-form>
-                                        </b-dropdown>
+                                                    </b-form-checkbox-group>
+                                                </b-dropdown-form>
+                                            </b-dropdown>
+                                        </div>
                                     </div>
                                 </div>
                             </b-tab>
@@ -188,7 +190,7 @@
         },
         methods: {
             getWindCoef(turbine,locationId){
-                
+
             },
             getSolarPanels(){
                 this.dropDownBusy = true

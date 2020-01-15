@@ -44,10 +44,10 @@ class SolarPanelController extends Controller
     public function edit($id, Request $request){
         $data = $this->validate($request, [
             'model' => 'required|unique:solar_panels,model,'.$id.',id,user_id,'.Auth::user()->id,
-            'invest_cost' => 'required|numeric',
-            'nominal_power' => 'required|numeric',
-            'width' => 'required|numeric',
-            'height' => 'required|numeric',
+            'invest_cost' => 'required|numeric|min:1|max:10000',
+            'nominal_power' => 'required|numeric|min:1|max:1000000',
+            'width' => 'required|numeric|min:0.1|max:10',
+            'height' => 'required|numeric|min:0.1|max:10',
         ]);
         $solar_panel = SolarPanel::findOrFail($id);
         $solar_panel->update($data);

@@ -42,8 +42,10 @@ export default {
         var solver = require("javascript-lp-solver/src/solver"),
         results,
         model = {
-            "optimize": "capacity",
-            "opType": "max",
+            "optimize": {
+                "capacity": "max",
+                "energy": "min"
+            },
             "constraints": {
                 "c1": {"max": 100},
                 "c2": {"max": 30},
@@ -51,12 +53,14 @@ export default {
             },
             "variables": {
                 "x": {
+                    "energy": 10,
                     "capacity": 20,
                     "c1": 10,
                     "c2": 1,
                     "c3": 0
                 },
                 "y": {
+                    "energy": 5,
                     "capacity": 30,
                     "c1": 1,
                     "c2": 0,
