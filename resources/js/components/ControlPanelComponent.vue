@@ -105,7 +105,7 @@
         <b-card-footer>
             <b-button variant="primary" @click="$bvModal.show('add-panel')"> Add solar panel</b-button>
             <b-button variant="primary" @click="$bvModal.show('add-turbine')"> Add eolic turbine</b-button>
-            <b-button variant="primary"> Run simulations</b-button>
+            <b-button variant="primary" @click="makeModel()" > Run simulations</b-button>
         </b-card-footer>
     </b-card>
 </template>
@@ -155,7 +155,7 @@
             this.cfiec1 = new L.leafletGeotiff('CUB_capacity-factor_IEC1.tif')
             this.cfiec2 = new L.leafletGeotiff('CUB_capacity-factor_IEC2.tif')
             this.cfiec3 = new L.leafletGeotiff('CUB_capacity-factor_IEC3.tif')
-            this.pvoutput = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif')
+            this.pvout = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif')
             
             Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
                 console.log(e)
@@ -189,6 +189,72 @@
             })
         },
         methods: {
+            async makeModel(){
+                var solver = require("javascript-lp-solver/src/solver")
+                //Save all facilities
+                let sp = {}
+                let wt = {}
+                await axios.get('/solar_panels').then( (response) => {
+                    for (let index = 0; index < response.data.length; index++) {
+                        const element = response.data[index];
+                        sp[element.id] = element
+                    }
+                })
+                await axios.get('/wind_turbines').then( (response) => {
+                    for (let index = 0; index < response.data.length; index++) {
+                        const element = response.data[index];
+                        wt[element.id] = element
+                    }
+                })
+                var model = {
+                    "optimize": {
+                        "energy": "max",
+                        "costs": "min"
+                    },
+                }
+                model["constraints"] = {}
+                model["variables"] = {}
+                model["ints"] = {}
+                for (let i = 0; i < this.zoneID.length; i++) {
+                    const item = this.zoneID[i]
+                    const oneConstName = '$oneConstName$' + item
+                    model["constraints"][oneConstName] = {"max":1}
+                    if(this.solarPanelsSelected[item]){
+                        for (let j = 0; j < this.solarPanelsSelected[item].length; j++) {
+                            const spid = this.solarPanelsSelected[item][j]
+                            if(sp[spid]){
+                                const varName = sp[spid].model + '$1$' + item
+                                const betaVarName = '$beta$' + sp[spid].model + '$1$' + item
+                                const beta1ConstName = '$beta1c$' + varName 
+                                model["constraints"][beta1ConstName] = {"min": 0}
+                                const beta2ConstName = '$beta2c$' + varName
+                                model["constraints"][beta2ConstName] = {"max": 0}
+                                const beta3ConstName = '$beta3c$' + varName
+                                model["constraints"][beta3ConstName] = {"max": 1}
+                                const mx = this.maxPanels(item,sp[spid].width,sp[spid].height,0)
+                                const mxFacilinZoneName = '$mxFacilinZoneName$' + varName
+                                model["constraints"][mxFacilinZoneName] = {"max": mx}
+                                model["variables"][varName] = {}
+                                model["variables"][varName]["energy"] = this.getSolarPVOut(item)*sp[spid].nominal_power
+                                model["variables"][varName]["costs"] = sp[spid].invest_cost
+                                model["variables"][varName][beta1ConstName] = -1
+                                model["variables"][varName][beta2ConstName] = -1
+                                model["variables"][varName][mxFacilinZoneName] = 1
+                                model["variables"][betaVarName] = {}
+                                model["variables"][betaVarName][beta1ConstName] = mx+1
+                                model["variables"][betaVarName][beta2ConstName] = 1
+                                model["variables"][betaVarName][beta3ConstName] = 1
+                                model["variables"][betaVarName][oneConstName] = 1
+                                model["ints"][varName] = 1
+                                model["ints"][betaVarName] = 1
+                            }
+                        }
+                    }
+                }
+                console.log(model)
+                let results = solver.Solve(model);
+                console.log(results);
+            },
             getWindCoef(turbine,locationId){
 
             },
@@ -241,6 +307,25 @@
                 }else{
                     return (area/10000.0).toFixed(2) + ' ha'
                 }
+            },
+            getSolarPVOut(item){
+                var centroid = this.centroid(item)
+                var area = this.calcArea(item)
+                var d = 1
+                if(area > 10000){
+                    d = Math.sqrt(area)/100.0
+                }
+                var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
+                var bbox = turf.bbox(polygon);
+                var options = {units: 'meters',mask: polygon};
+                var grid = turf.pointGrid(bbox, d , options);
+                var mean = this.pvout.getValueAtLatLng(centroid.geometry.coordinates[1],centroid.geometry.coordinates[0])
+                for( var i = 0 ; i < grid.features.length ; i++ ){
+                    var p = grid.features[i].geometry.coordinates
+                    mean += this.pvout.getValueAtLatLng(p[1],p[0])
+                }
+                mean /= (grid.features.length+1)
+                return mean
             },
             solarPotential(item){
                 var centroid = this.centroid(item)
@@ -344,7 +429,7 @@
                 console.log('Locations: ' + locations.length)
                 */
             },
-            maxPanels(item,w,h){
+            maxPanels(item,w,h,see){
                 var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
                 var bbox = turf.bbox(polygon);
                 var options = {units: 'meters',mask: polygon};
@@ -398,7 +483,8 @@
                                 var cl = turf.destination(fp, h/1000.0, 0);
                                 var points = turf.featureCollection([fp,lp,cl,cr]);
                                 var bbPolygon = turf.convex(points);
-                                collection.push(L.geoJSON(bbPolygon).bindPopup(numberInRow+2 + ' panels').addTo(Vue.prototype.$map));
+                                if(see)
+                                    collection.push(L.geoJSON(bbPolygon).bindPopup(numberInRow+2 + ' panels').addTo(Vue.prototype.$map));
                                 numberInRow = 0;
                             }
                             fp = -1;
@@ -415,6 +501,7 @@
                         var cl = turf.destination(fp, h/1000.0, 0);
                         var points = turf.featureCollection([fp,lp,cl,cr]);
                         var bbPolygon = turf.convex(points);
+                        if(see)
                         collection.push(L.geoJSON(bbPolygon).bindPopup(numberInRow+2 + ' panels').addTo(Vue.prototype.$map));
                         /*
                         L.geoJSON(
