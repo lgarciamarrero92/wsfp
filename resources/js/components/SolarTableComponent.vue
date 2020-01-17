@@ -45,7 +45,7 @@ export default {
     data () {
         return {
             currentPage: 1,
-            fields: ['model',{key: 'nominal_power',label: 'Power (W)'},{key:'invest_cost',label: 'Inv. Cost ($)'},{key:'dimentions',label:'Dimentions (m)'},'actions'],
+            fields: ['model',{key: 'nominal_power',label: 'Power (Wp)'},{key:'invest_cost',label: 'Inv. Cost ($)'},{key:'dimentions',label:'Dimentions (m)'},'actions'],
             totalRows: 1,
         }
     },

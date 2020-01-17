@@ -2,8 +2,8 @@
     <b-card 
         no-body
     >
-        <b-tabs card>
-            <b-tab title="Zones" active>
+        <b-tabs v-model="tabIndex" card>
+            <b-tab title="Zones">
                 <div v-if="zoneID.length > 0" >
                     <b-card no-body>
                         <b-tabs pills card>
@@ -94,7 +94,82 @@
                 </div>
                 <b-alert v-else show variant="info"> Draw an area in Map for start!!</b-alert>
             </b-tab>
-            <b-tab title="Results"><b-card-text>Is coming....</b-card-text></b-tab>
+            <b-tab title="Results">
+                <b-alert v-if="Object.keys(results).length == 0" show variant="info"> Nothing to show</b-alert>
+                <div v-if="Object.keys(results).length > 0">
+                    <h5>
+                        <b-badge variant="success">
+                            Energy generated: 
+                            <span>
+                                {{results["energy"].toFixed(2)}} kWh/year
+                            </span>
+                        </b-badge>
+                    </h5>
+                    <h5>
+                        <b-badge variant="success">
+                            Total costs: 
+                            <span>
+                                $ {{results["costs"]}}
+                            </span>
+                        </b-badge>
+                    </h5>
+                    <b-card no-body>
+                        <b-tabs pills card>
+                            <b-tab v-for="(item,index) in zoneID" :key = index :title='"Zone " + (index+1)' @click="zoomZone(item)" >
+                                <div v-if="results[item]">
+                                    <h5>
+                                        <b-badge variant="primary">
+                                            Renewable source: 
+                                            <span>
+                                                {{results[item]["source"]}}
+                                            </span>
+                                        </b-badge>
+                                    </h5>
+                                    <div v-if="results[item]['source']=='solar'">
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Install panel model: 
+                                                <span>
+                                                    {{results[item]['technology'].model}}
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Number of panels: 
+                                                <span>
+                                                    {{results[item]['number']}}
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                    </div>
+                                    <div v-if="results[item]['source']=='eolic'"> 
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Install turbine model: 
+                                                <span>
+                                                    {{results[item]['technology'].model}}
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                        <h5>
+                                            <b-badge variant="primary">
+                                                Number of turbines: 
+                                                <span>
+                                                    {{results[item]['number']}}
+                                                </span>
+                                            </b-badge>
+                                        </h5>
+                                    </div>
+                                </div>
+                                <div v-else>
+                                    <b-alert show variant="info"> Nothing to show</b-alert>
+                                </div>
+                            </b-tab>
+                        </b-tabs>
+                    </b-card>
+                </div>
+            </b-tab>
             <b-tab title="Solar panels">
                 <solar-table />
             </b-tab>
@@ -116,6 +191,8 @@
     export default {
         data () {
             return {
+                tabIndex: 0,
+                results: {},
                 solarPanelsSelected: {},
                 solarPanels: [],
                 windTurbinesSelected: {},
@@ -140,7 +217,6 @@
             Vue.prototype.$user_id = this.user_id
         },
         mounted() {
-            
             this.$root.$on('bv::dropdown::show', evt => {
                 if(evt.componentId == "solar"){
                     this.getSolarPanels()
@@ -189,6 +265,39 @@
             })
         },
         methods: {
+            decodeSolution(sol,wt,sp){
+                this.results = {}
+                let keys = Object.keys(sol)
+                for (let index = 0; index < keys.length; index++) {
+                    const key = keys[index];
+                    if(key.includes("$1$") && !key.includes("beta")){
+                        let model = key.split("$1$")[1]
+                        let zid = key.split("$1$")[2]
+                        let id = key.split("$1$")[0]
+                        this.maxPanels(zid,sp[id].width,sp[id].height,1,sol[key])
+                        this.results[zid] = {}
+                        this.results[zid]["source"] = "solar"
+                        this.results[zid]["technology"] = sp[id]
+                        this.results[zid]["number"] = sol[key]
+                        //console.log("In zone " + zid + " Install " + sol[key] + " items of model " + model + " of solar panels")
+                    }
+                    if(key.includes("$2$") && !key.includes("beta")){
+                        let model = key.split("$2$")[1]
+                        let zid = key.split("$2$")[2]
+                        let id = key.split("$2$")[0]
+                        this.maxTurbines(zid,wt[id].rotor_diameter,1,sol[key])
+                        this.results[zid] = {}
+                        this.results[zid]["source"] = "eolic"
+                        this.results[zid]["technology"] = wt[id]
+                        this.results[zid]["number"] = sol[key]
+                        //console.log("In zone " + zid + " Install " + sol[key] + " items of model " + model + " of wind turbines")
+                    }
+                }
+                this.results['energy'] = sol["energy"]
+                this.results['costs'] = sol["costs"]
+                //console.log(this.results)
+                //console.log("It will produce "+  + "kWh " + "and costs "+sol["costs"])
+            },
             async makeModel(){
                 var solver = require("javascript-lp-solver/src/solver")
                 //Save all facilities
@@ -223,8 +332,8 @@
                         for (let j = 0; j < this.solarPanelsSelected[item].length; j++) {
                             const spid = this.solarPanelsSelected[item][j]
                             if(sp[spid]){
-                                const varName = sp[spid].model + '$1$' + item
-                                const betaVarName = '$beta$' + sp[spid].model + '$1$' + item
+                                const varName = sp[spid].id + '$1$' + sp[spid].model + '$1$' + item
+                                const betaVarName = '$beta$' + varName
                                 const beta1ConstName = '$beta1c$' + varName 
                                 model["constraints"][beta1ConstName] = {"min": 0}
                                 const beta2ConstName = '$beta2c$' + varName
@@ -235,7 +344,7 @@
                                 const mxFacilinZoneName = '$mxFacilinZoneName$' + varName
                                 model["constraints"][mxFacilinZoneName] = {"max": mx}
                                 model["variables"][varName] = {}
-                                model["variables"][varName]["energy"] = this.getSolarPVOut(item)*sp[spid].nominal_power
+                                model["variables"][varName]["energy"] = this.getSolarEnergy(item,sp[spid])
                                 model["variables"][varName]["costs"] = sp[spid].invest_cost
                                 model["variables"][varName][beta1ConstName] = -1
                                 model["variables"][varName][beta2ConstName] = -1
@@ -250,13 +359,42 @@
                             }
                         }
                     }
+                    if(this.windTurbinesSelected[item]){
+                        for (let j = 0; j < this.windTurbinesSelected[item].length; j++) {
+                            const spid = this.windTurbinesSelected[item][j]
+                            if(wt[spid]){
+                                const varName = wt[spid].id + '$2$' + wt[spid].model + '$2$' + item
+                                const betaVarName = '$beta$' + varName
+                                const beta1ConstName = '$beta1c$' + varName 
+                                model["constraints"][beta1ConstName] = {"min": 0}
+                                const beta2ConstName = '$beta2c$' + varName
+                                model["constraints"][beta2ConstName] = {"max": 0}
+                                const beta3ConstName = '$beta3c$' + varName
+                                model["constraints"][beta3ConstName] = {"max": 1}
+                                const mx = this.maxTurbines(item,wt[spid].rotor_diameter,0)
+                                const mxFacilinZoneName = '$mxFacilinZoneName$' + varName
+                                model["constraints"][mxFacilinZoneName] = {"max": mx}
+                                model["variables"][varName] = {}
+                                model["variables"][varName]["energy"] = this.getWindEnergy(item,wt[spid])
+                                model["variables"][varName]["costs"] = wt[spid].invest_cost
+                                model["variables"][varName][beta1ConstName] = -1
+                                model["variables"][varName][beta2ConstName] = -1
+                                model["variables"][varName][mxFacilinZoneName] = 1
+                                model["variables"][betaVarName] = {}
+                                model["variables"][betaVarName][beta1ConstName] = mx+1
+                                model["variables"][betaVarName][beta2ConstName] = 1
+                                model["variables"][betaVarName][beta3ConstName] = 1
+                                model["variables"][betaVarName][oneConstName] = 1
+                                model["ints"][varName] = 1
+                                model["ints"][betaVarName] = 1
+                            }
+                        }
+                    }
                 }
-                console.log(model)
+                //console.log(model)
                 let results = solver.Solve(model);
-                console.log(results);
-            },
-            getWindCoef(turbine,locationId){
-
+                this.decodeSolution(results["vertices"][0],wt,sp)
+                //console.log(results);
             },
             getSolarPanels(){
                 this.dropDownBusy = true
@@ -308,7 +446,7 @@
                     return (area/10000.0).toFixed(2) + ' ha'
                 }
             },
-            getSolarPVOut(item){
+            getSolarEnergy(item,tec){
                 var centroid = this.centroid(item)
                 var area = this.calcArea(item)
                 var d = 1
@@ -325,7 +463,36 @@
                     mean += this.pvout.getValueAtLatLng(p[1],p[0])
                 }
                 mean /= (grid.features.length+1)
-                return mean
+                
+                return mean*(tec.nominal_power/1000.0)
+            },
+            getWindEnergy(item,tec){
+                var centroid = this.centroid(item)
+                var area = this.calcArea(item)
+                var d = 1
+                if(area > 10000){
+                    d = Math.sqrt(area)/100.0
+                }
+                var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
+                var bbox = turf.bbox(polygon);
+                var options = {units: 'meters',mask: polygon};
+                var grid = turf.pointGrid(bbox, d , options);
+                var layer = null
+                if(tec.iec_class == 1){
+                    layer = this.cfiec1
+                }else if(tec.iec_class == 2){
+                    layer = this.cfiec2
+                }else{
+                    layer = this.cfiec3
+                }
+                var mean = layer.getValueAtLatLng(centroid.geometry.coordinates[1],centroid.geometry.coordinates[0])
+                for( var i = 0 ; i < grid.features.length ; i++ ){
+                    var p = grid.features[i].geometry.coordinates
+                    mean += layer.getValueAtLatLng(p[1],p[0])
+                }
+                mean /= (grid.features.length+1)
+                
+                return mean*tec.nominal_power*8760.0
             },
             solarPotential(item){
                 var centroid = this.centroid(item)
@@ -347,29 +514,6 @@
                 return `${mean.toFixed(2)} kWh/m<sup>2</sup>`
             },
             windPotential(item){
-                //var eolicIcon = L.icon({
-                //    iconUrl: 'icon_eolic.png',
-                //    iconSize: [30, 30],
-                //    iconAnchor: [15,30]
-                //})
-                //var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
-                //var bbox = turf.bbox(polygon);
-                //var bboxPolygon = turf.bboxPolygon(bbox);
-                //L.geoJSON(bboxPolygon).addTo(Vue.prototype.$map);
-                //var cellSide = 5;
-                //var options = {units: 'meters',mask: polygon};
-                //var grid = turf.pointGrid(bbox, cellSide, options);
-                /*
-                for( var i = 0 ; i < grid.features.length ; i++ ){
-                    var p = grid.features[i].geometry.coordinates
-                    if(i>0 && p[0] != grid.features[i-1].geometry.coordinates[0]){
-                        console.log(i)
-                    }
-                    L.marker([p[1],p[0]],{icon: eolicIcon}).addTo(Vue.prototype.$map)
-                }
-                */
-                //console.log(grid)
-                //L.geoJSON(grid).addTo(Vue.prototype.$map);
                 var centroid = this.centroid(item)
                 var area = this.calcArea(item)
                 var d = 1
@@ -392,7 +536,8 @@
                 //this.maxPanels(item,0.70,1.31)
                 return `${(mean*8.760).toFixed(2)} kWh/m<sup>2</sup>`
             },
-            maxTurbines(item,mind){//mind in kilometers
+            maxTurbines(item,diameter,see,maxT=0){//mind in kilometers
+                var mind = (5.0*diameter)/1000
                 var centroid = this.centroid(item)
                 var area = this.calcArea(item)
                 var d = 1
@@ -419,17 +564,20 @@
                         locations.push(p);
                     }
                 }
-                /*
-                if(locations.length <= 100){
-                    for( var i = 0 ; i < locations.length; i++ ){
+                if(see){
+                    var windTurbineIcon = L.icon({
+                        iconUrl: 'icon_eolic.png',
+                        iconSize: [50, 50],
+                        iconAnchor: [25,50]
+                    })
+                    for( var i = 0 ; i < (locations.length) && (i<maxT); i++ ){
                         var p = locations[i].geometry.coordinates
-                        L.marker([p[1],p[0]]).addTo(Vue.prototype.$map)
+                        L.marker([p[1],p[0]],{icon: windTurbineIcon}).addTo(Vue.prototype.$map)
                     }
                 }
-                console.log('Locations: ' + locations.length)
-                */
+                return (locations.length)
             },
-            maxPanels(item,w,h,see){
+            maxPanels(item,w,h,see,maxP = 0){
                 var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
                 var bbox = turf.bbox(polygon);
                 var options = {units: 'meters',mask: polygon};
@@ -478,13 +626,14 @@
                             }
                         }else{
                             if( lp != fp ){
-                                numberOfPanels += (numberInRow+2)
+                                
                                 var cr = turf.destination(lp, h/1000.0, 0);
                                 var cl = turf.destination(fp, h/1000.0, 0);
                                 var points = turf.featureCollection([fp,lp,cl,cr]);
                                 var bbPolygon = turf.convex(points);
-                                if(see)
-                                    collection.push(L.geoJSON(bbPolygon).bindPopup(numberInRow+2 + ' panels').addTo(Vue.prototype.$map));
+                                if(see && numberOfPanels < maxP )
+                                    collection.push(L.geoJSON(bbPolygon).bindPopup(Math.min(numberInRow+2,maxP-numberOfPanels) + ' panels').addTo(Vue.prototype.$map));
+                                numberOfPanels += (numberInRow+2)
                                 numberInRow = 0;
                             }
                             fp = -1;
@@ -496,23 +645,14 @@
                         p = turf.destination(p, distance, bearing);
                     }
                     if( lp != fp ){
-                        numberOfPanels += (numberInRow+2)
+                        
                         var cr = turf.destination(lp, h/1000.0, 0);
                         var cl = turf.destination(fp, h/1000.0, 0);
                         var points = turf.featureCollection([fp,lp,cl,cr]);
                         var bbPolygon = turf.convex(points);
-                        if(see)
-                        collection.push(L.geoJSON(bbPolygon).bindPopup(numberInRow+2 + ' panels').addTo(Vue.prototype.$map));
-                        /*
-                        L.geoJSON(
-                            bbPolygon,
-                            {
-                                onEachFeature: function(f,l){
-                                    l.bindPopup(numberInRow+2 + ' panels')
-                                }
-                            }
-                        ).addTo(Vue.prototype.$map);
-                        */
+                        if(see && numberOfPanels < maxP )
+                            collection.push(L.geoJSON(bbPolygon).bindPopup(Math.min(numberInRow+2,maxP-numberOfPanels) + ' panels').addTo(Vue.prototype.$map));
+                        numberOfPanels += (numberInRow+2)
                         numberInRow = 0;
                     }
                 }

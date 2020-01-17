@@ -42,7 +42,7 @@ export default {
     data () {
         return {
             currentPage: 1,
-            fields: ['model',{key: 'nominal_power',label: 'Power (W)'},{key:'invest_cost',label: 'Inv. Cost ($)'},{key:'rotor_diameter',label:'Diameter (m)'},'actions'],
+            fields: ['model',{key: 'nominal_power',label: 'Power (kW)'},{key:'invest_cost',label: 'Inv. Cost ($)'},{key:'rotor_diameter',label:'Diameter (m)'},'actions'],
             totalRows: 1,
         }
     },

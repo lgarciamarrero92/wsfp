@@ -44,7 +44,7 @@
             <b-form-group
                 class="col-6"
                 id="nominal-power-group"
-                label="Nominal power (W):"
+                label="Nominal power (kW):"
             >
                 <b-form-input
                     id = "nominal-power"
