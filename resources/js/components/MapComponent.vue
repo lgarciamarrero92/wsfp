@@ -77,6 +77,7 @@ export default {
         
         var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
             maxZoom: 20,
+            attribution: 'Map data ©2019 Google',
             subdomains:['mt0','mt1','mt2','mt3']
         });
 
@@ -86,11 +87,15 @@ export default {
         });
 
         //var mqi = L.tileLayer("http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png", {subdomains: ['otile1','otile2','otile3','otile4']});
-        
+        var tiles = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+            maxZoom: 20,
+            subdomains:['mt0','mt1','mt2','mt3']
+        });
+        /*
         var tiles =  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '©OpenStreetMap'
         })
-        
+        */
         var labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
                 attribution: '©OpenStreetMap, ©CartoDB',
         })
@@ -135,8 +140,7 @@ export default {
         Vue.prototype.$map.setMaxBounds(bounds);
 
         var baseMaps = {
-            "Satellite": googleSat,
-            "Streets": tiles
+            "Satellite": googleSat
         };
 
         var overlayMaps = {
