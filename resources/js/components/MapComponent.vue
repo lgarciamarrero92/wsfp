@@ -3,8 +3,8 @@
     <div class = "w-100">
         <div id = "map" style = "height: 70vh;" >
         </div>
-        <location-details-modal :type="typeOfFigure" :centroid = "centroid">
-        </location-details-modal>
+        <!--location-details-modal :type="typeOfFigure" :centroid = "centroid">
+        </location-details-modal-->
     </div>
 </template>
 
@@ -17,11 +17,11 @@ import { latLng, Icon, icon, Polygon } from 'leaflet'
 //import 'leaflet-easybutton'
 import 'leaflet-draw'
 import 'leaflet-draw/dist/leaflet.draw.css'
-import * as turf from '@turf/turf'
-import 'plotty';
-import GeoTIFF from 'geotiff';
-import 'leaflet-geotiff/leaflet-geotiff';
-import 'leaflet-geotiff/leaflet-geotiff-plotty';
+//import * as turf from '@turf/turf'
+//import 'plotty';
+//import GeoTIFF from 'geotiff';
+//import 'leaflet-geotiff/leaflet-geotiff';
+//import 'leaflet-geotiff/leaflet-geotiff-plotty';
 //import 'esri-leaflet'
 //import 'esri-leaflet-geocoder'
 import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
@@ -86,15 +86,15 @@ export default {
         });
 
         //var mqi = L.tileLayer("http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png", {subdomains: ['otile1','otile2','otile3','otile4']});
-
-        var tiles =  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
-                attribution: '©OpenStreetMap, ©CartoDB'
+        
+        var tiles =  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '©OpenStreetMap'
         })
         
         var labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
                 attribution: '©OpenStreetMap, ©CartoDB',
         })
-
+        /*
         const solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif', {
             renderer: new L.LeafletGeotiff.Plotty({
                 colorScale: 'rainbow',
@@ -104,11 +104,10 @@ export default {
                 displayMax: 2000,
             })
         })
+        */
         let legendSolar = null
         let legendEolic = null
-        solar.on('load',()=>{
-            
-        })
+        /*
         const eolic = new L.leafletGeotiff('CUB_wind-speed_50m.tif', {
             opacity: .1,
             renderer: new L.LeafletGeotiff.Plotty({
@@ -120,6 +119,7 @@ export default {
             })
             
         })
+        */
         
         var southWest = L.latLng(23.1886107447, -74.1780248685),
         northEast = L.latLng(19.8554808619, -84.9749110583),
@@ -136,9 +136,7 @@ export default {
 
         var baseMaps = {
             "Satellite": googleSat,
-            "Streets": tiles,
-            "Solar": solar,
-            "Eolic": eolic
+            "Streets": tiles
         };
 
         var overlayMaps = {
@@ -147,6 +145,7 @@ export default {
 
         Vue.prototype.$map.on('baselayerchange', (e) => {
             this.layerActive = e.name
+            /*
             if(this.layerActive == "Eolic" || this.layerActive == "Solar"){
                 this.disableMap()
                 if( this.layerActive == "Solar" ){
@@ -200,9 +199,11 @@ export default {
                         Vue.prototype.$map.removeControl(legendSolar)
                 this.enableMap()
             }
+            */
         });
 
         Vue.prototype.$map.on('click',(e)=>{
+            /*
             if(this.layerActive == 'Solar' && this.isDrawing == false){
                 L.popup()
                     .setLatLng(e.latlng)
@@ -214,6 +215,7 @@ export default {
                     .setContent("Wind velocity: " + eolic.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " m/s" )
                     .openOn(Vue.prototype.$map) 
             }
+            */
         })
 
         
@@ -308,6 +310,7 @@ export default {
             */
             //console.log(pointOnPolygon)
             layer.on('click', () => {
+                /*
                 if(this.layerActive != 'Solar' && this.layerActive != 'Eolic'){
                     vm.typeOfFigure = type;
                     var centroid = turf.centroid(polygon)
@@ -316,6 +319,7 @@ export default {
                         vm.$bvModal.show('modal-center')
                     })
                 }
+                */
             });
         });
 
