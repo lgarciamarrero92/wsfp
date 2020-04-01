@@ -31,3 +31,9 @@ Route::get('/home', 'HomeController@index')->name('home');
  Route::post('/wind_turbines','WindTurbineController@store');
  Route::put('/wind_turbines/{id}','WindTurbineController@edit');
  Route::delete('/wind_turbines/{id}','WindTurbineController@delete');
+ //Zones
+ Route::get('/zones','ZoneController@getAll');
+ Route::get('/zones/{id}','ZoneController@get');
+ Route::post('/zones','ZoneController@store');
+ Route::put('/zones/{id}','ZoneController@edit');
+ Route::delete('/zones/{id}','ZoneController@delete');

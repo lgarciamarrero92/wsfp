@@ -16,10 +16,11 @@ class SolarPanelController extends Controller
     {
         $data = $this->validate($request, [
             'model' => 'required|unique:solar_panels,model,NULL,id,user_id,'.Auth::user()->id,
-            'invest_cost' => 'required|numeric|min:1|max:10000',
+            'invest_cost' => 'required|numeric|min:1|max:1000000',
             'nominal_power' => 'required|numeric|min:1|max:1000000',
             'width' => 'required|numeric|min:0.1|max:10',
             'height' => 'required|numeric|min:0.1|max:10',
+            'om_cost_per_year' => 'required|numeric|min:1|max:2000000'
         ]);
         $data['user_id'] = Auth::user()->id;
         $panel = new SolarPanel($data);
@@ -48,6 +49,7 @@ class SolarPanelController extends Controller
             'nominal_power' => 'required|numeric|min:1|max:1000000',
             'width' => 'required|numeric|min:0.1|max:10',
             'height' => 'required|numeric|min:0.1|max:10',
+            'om_cost_per_year' => 'required|numeric|min:1|max:2000000'
         ]);
         $solar_panel = SolarPanel::findOrFail($id);
         $solar_panel->update($data);

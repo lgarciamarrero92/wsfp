@@ -17,6 +17,7 @@ import { latLng, Icon, icon, Polygon } from 'leaflet'
 //import 'leaflet-easybutton'
 import 'leaflet-draw'
 import 'leaflet-draw/dist/leaflet.draw.css'
+import area from '@turf/area'
 //import * as turf from '@turf/turf'
 //import 'plotty';
 //import GeoTIFF from 'geotiff';
@@ -77,7 +78,7 @@ export default {
         
         var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
             maxZoom: 20,
-            attribution: 'Map data ©2019 Google',
+            attribution: 'Map data ©2020 Google',
             subdomains:['mt0','mt1','mt2','mt3']
         });
 
@@ -140,7 +141,8 @@ export default {
         Vue.prototype.$map.setMaxBounds(bounds);
 
         var baseMaps = {
-            "Satellite": googleSat
+            "Satellite": googleSat,
+            'Tiles': tiles
         };
 
         var overlayMaps = {
@@ -149,79 +151,7 @@ export default {
 
         Vue.prototype.$map.on('baselayerchange', (e) => {
             this.layerActive = e.name
-            /*
-            if(this.layerActive == "Eolic" || this.layerActive == "Solar"){
-                this.disableMap()
-                if( this.layerActive == "Solar" ){
-                    if(legendEolic)
-                        Vue.prototype.$map.removeControl(legendEolic)
-                    legendSolar = L.control({position: 'bottomleft'});
-                    legendSolar.onAdd = function (map) {
-                        const div = L.DomUtil.create('div','solar legend');
-                        let mn = solar.options.renderer.options.displayMin;
-                        let mx = solar.options.renderer.displayMax;
-                        div.innerHTML += '<img id="colorScaleImage" src=' + solar.options.renderer.colorScaleData + " style='vertical-align: middle; height:20px; width:300px;'/>";
-                        div.innerHTML += '<br>'
-                        for (let index = 0; index < 10; index++) {
-                            div.innerHTML += '<span style = "writing-mode: vertical-rl; text-orientation: mixed;margin-right: 12px; margin-top: 2px;" >' +  mn + '</span>'
-                            mn += 140;
-                        }
-                        div.innerHTML += '<span style = "margin-right: 12px; margin-top: 2px;" >kWh/kWp </span>'
-                        return div;
-                    };
-                    legendSolar.onRemove = function (map){
-                        let div = L.DomUtil.remove('solar legend');
-                        return ;
-                    };
-                    legendSolar.addTo(Vue.prototype.$map)
-                }else{
-                    if(legendSolar)
-                        Vue.prototype.$map.removeControl(legendSolar)
-                    legendEolic = L.control({position: 'bottomleft'});
-                    legendEolic.onAdd = function (map) {
-                        const div = L.DomUtil.create('div','eolic legend');
-                        let mn = eolic.options.renderer.options.displayMin;
-                        div.innerHTML += '<img id="colorScaleImage" src=' + eolic.options.renderer.colorScaleData + " style='vertical-align: middle; height:20px; width:300px;'/>";
-                        div.innerHTML += '<br>'
-                        for (let index = 0; index < 10; index++) {
-                            div.innerHTML += '<span style = "writing-mode: vertical-rl; text-orientation: mixed;margin-right: 12px; margin-top: 2px;" >' +  mn + '</span>'
-                            mn += 1;
-                        }
-                        div.innerHTML += '<span style = "margin-right: 12px; margin-top: 2px;" >m/s </span>'
-                        return div;
-                    };
-                    legendEolic.onRemove = function (map){
-                        let div = L.DomUtil.remove('eolic legend');
-                        return ;
-                    };
-                    legendEolic.addTo(Vue.prototype.$map)
-                }
-            }else{
-                if(legendEolic)
-                        Vue.prototype.$map.removeControl(legendEolic)
-                if(legendSolar)
-                        Vue.prototype.$map.removeControl(legendSolar)
-                this.enableMap()
-            }
-            */
         });
-
-        Vue.prototype.$map.on('click',(e)=>{
-            /*
-            if(this.layerActive == 'Solar' && this.isDrawing == false){
-                L.popup()
-                    .setLatLng(e.latlng)
-                    .setContent("Photovoltaic power output: " + solar.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " kWh/kWp" )
-                    .openOn(Vue.prototype.$map)
-            }else if(this.layerActive == 'Eolic' && this.isDrawing == false){
-                L.popup()
-                    .setLatLng(e.latlng)
-                    .setContent("Wind velocity: " + eolic.getValueAtLatLng(e.latlng.lat,e.latlng.lng) + " m/s" )
-                    .openOn(Vue.prototype.$map) 
-            }
-            */
-        })
-
         
 
         L.control.layers(baseMaps, overlayMaps).addTo(Vue.prototype.$map);
@@ -234,154 +164,147 @@ export default {
         })
 
         Vue.prototype.$map.addControl(searchControl);
-
-        Vue.prototype.$drawnItems = new L.FeatureGroup();
-
-        Vue.prototype.$map.addLayer(Vue.prototype.$drawnItems);
-
-        var options = {
-            position: 'topright',
-            draw: {
-                marker: false,
-                circlemarker: false,
-                polyline: false,
-                polygon: {
-                    showArea: true,
-                    showLength: true,
-                    allowIntersection: false, // Restricts shapes to simple polygons
-                    drawError: {
-                        color: '#e1e100', // Color the shape will turn when intersects
-                        message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-                    },
-                    shapeOptions: {
-                        color: '#bada55'
-                    }
-                },
-                circle: false, // Turns off this drawing tool
-                rectangle: {
-                    shapeOptions: {
-                        color: '#bada55'
-                    }
-                }
-            },
-            edit: {
-                featureGroup: Vue.prototype.$drawnItems, //REQUIRED!!
-            }
-        };
-
-        var drawControl = new L.Control.Draw(
-            options
-        );
-
-        Vue.prototype.$map.addControl(drawControl);
-
-        Vue.prototype.$map.on(L.Draw.Event.DRAWSTART, (e) => {
-            this.isDrawing = true
-        })
-        Vue.prototype.$map.on(L.Draw.Event.EDITSTART, (e) => {
-            this.isDrawing = true
-        })
-
-        Vue.prototype.$map.on(L.Draw.Event.DRAWSTOP, (e) => {
-            this.isDrawing = false
-        })
-        Vue.prototype.$map.on(L.Draw.Event.EDITSTOP, (e) => {
-            this.isDrawing = false
-        })
-
-        Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
-            var type = e.layerType
-            var layer = e.layer;
-            Vue.prototype.$drawnItems.addLayer(layer);
-            console.log(Vue.prototype.$drawnItems)
-            var polygon = layer.toGeoJSON();
-            //var points1 = vm.generatePositions(polygon,45)
-            //var points = turf.featureCollection(points1)
-            //var hull = turf.convex(points);
-            //L.geoJSON(hull).addTo(vm.map);
-            /*
-            var bbox = turf.bbox(polygon);
-            var points = turf.randomPoint(25, {bbox: bbox})
-            //console.log(bbox);
-            var centroid = turf.centroid(polygon)
-            L.geoJSON(points).addTo(vm.map);
-            L.geoJSON(centroid).addTo(vm.map);
-            /*
-            for (let index = 0; index < 50; index++) {
-                var pointOnPolygon = turf.pointOnFeature(polygon);
-                L.geoJSON(pointOnPolygon).addTo(vm.map);
-            }
-            */
-            //console.log(pointOnPolygon)
-            layer.on('click', () => {
-                /*
-                if(this.layerActive != 'Solar' && this.layerActive != 'Eolic'){
-                    vm.typeOfFigure = type;
-                    var centroid = turf.centroid(polygon)
-                    vm.centroid = centroid.geometry.coordinates
-                    Vue.nextTick( function () {
-                        vm.$bvModal.show('modal-center')
-                    })
-                }
-                */
-            });
-        });
-
-        /*
-        const freeDraw = new FreeDraw({ mode: NONE });
-        Vue.prototype.$map.addLayer(freeDraw);
-        freeDraw.on('markers', event => {
-            console.log(event)
-            var polygon = L.polygon(event.latLngs[0])
-            polygon.on('click',function(){
-                console.log('clicked')
-            })
-        });
-        var editButton = L.easyButton({
-            id: 'edit',
-            states: [{
-                stateName: 'edit',        // name the state
-                icon:      'fa-pencil-alt',               // and define its properties
-                title:     'Edit geometries',      // like its title
-                onClick: function(btn, map) {       // and its callback
-                    freeDraw.mode(ALL);
-                    btn.state('cancel-edit');    // change state on click!
-                }
-            }, 
-            {
-                stateName: 'cancel-edit',
-                icon:      '<span><i class="fas fa-times fa-xs" style="color:Tomato"></i><i class="fas fa-pencil-alt"></i></span>',
-                title:     'Cancel edit',
-                onClick: function(btn, map) {
-                    freeDraw.mode(NONE);
-                    btn.state('edit');
-                }
-            }]
-        }).addTo( Vue.prototype.$map );
-
-        var addDetailsButton = L.easyButton({
-            id: 'add-details',
-            states: [{
-                stateName: 'add-details',        // name the state
-                icon:      'fa-solar-panel',               // and define its properties
-                title:     'Add details',      // like its title
-                onClick: function(btn, map) {       // and its callback
-                    
-                    btn.state('cancel-add-details');    // change state on click!
-                }
-            }, 
-            {
-                stateName: 'cancel-add-details',
-                icon:      '<span><i class="fas fa-times fa-xs" style="color:Tomato"></i><i class="fas wind-turbine"></i></span>',
-                title:     'Cancel add details',
-                onClick: function(btn, map) {
-                    btn.state('add-details');
-                }
-            }]
-        }).addTo( Vue.prototype.$map );
-        */
+        
+        this.initDraw()
     },
     methods: {
+        async initDraw(){
+            
+            Vue.prototype.$drawnItems = new L.FeatureGroup();
+            Vue.prototype.$map.addLayer(Vue.prototype.$drawnItems);
+            var options = {
+                position: 'topright',
+                draw: {
+                    marker: false,
+                    circlemarker: false,
+                    polyline: false,
+                    polygon: {
+                        showArea: true,
+                        showLength: true,
+                        allowIntersection: false, // Restricts shapes to simple polygons
+                        drawError: {
+                            color: '#e1e100', // Color the shape will turn when intersects
+                            message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                        },
+                        shapeOptions: {
+                            color: '#bada55'
+                        }
+                    },
+                    circle: false, // Turns off this drawing tool
+                    rectangle: {
+                        shapeOptions: {
+                            color: '#bada55'
+                        }
+                    }
+                },
+                edit: {
+                    featureGroup: Vue.prototype.$drawnItems, //REQUIRED!!
+                }
+            };
+
+            var drawControl = new L.Control.Draw(
+                options
+            );
+
+            Vue.prototype.$map.addControl(drawControl);
+            
+            await axios.get('/zones').then(response=>{
+                if(response.data.length){
+                    response.data.forEach(element => {
+                        var data = JSON.parse(element.feature)
+                        var geometry = L.geoJSON(data,{
+                            onEachFeature: (feature,layer) => {
+                                layer._leaflet_id = element.id
+                                layer.options.color = "#bada55"
+                                layer.options.weight = 4
+                                layer.options.opacity = 0.5
+                                layer.options.fillOpacity = 0.2
+                                Vue.prototype.$drawnItems.addLayer(layer)
+                                this.$root.$emit('zonesCreated',layer._leaflet_id)
+                            }
+                        })
+                    })
+                }
+            })
+
+            
+
+            Vue.prototype.$map.on(L.Draw.Event.DRAWSTART, (e) => {
+                this.isDrawing = true
+            })
+            Vue.prototype.$map.on(L.Draw.Event.EDITSTART, (e) => {
+                this.isDrawing = true
+            })
+
+            Vue.prototype.$map.on(L.Draw.Event.DRAWSTOP, (e) => {
+                this.isDrawing = false
+            })
+            Vue.prototype.$map.on(L.Draw.Event.EDITSTOP, (e) => {
+                this.isDrawing = false
+            })
+            
+            Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
+                var type = e.layerType
+                var layer = e.layer;
+                var polygon = layer.toGeoJSON();
+                this.$root.$emit('zoneCreated',polygon)
+                this.$bvModal.show('add-edit-zone')
+            });
+            Vue.prototype.$map.on(L.Draw.Event.EDITED, (e) => {
+                var edit = Object.keys(e.layers._layers)
+                for(var i = 0 ; i < edit.length ; i++ ){
+                    var layer = e.layers._layers[edit[i]];
+                    var polygon = layer.toGeoJSON();
+                    var polygon_for_db = JSON.stringify(polygon);
+                    axios.put(`/zones/${edit[i]}`,{'feature' : polygon_for_db,'area': area(polygon)}).then((response)=>{
+                        layer._leaflet_id = response.data
+                        this.$bvToast.toast( 'Data edited successfully',{
+                            title: 'Confirmation',
+                            variant: 'success',
+                            autoHideDelay: 2000,
+                            solid: true
+                        })
+                    }).catch( e => {
+                        if(e.response.data.errors.area){
+                            this.$bvToast.toast( e.response.data.errors.area[0] + ' Please, reload this page.',{
+                                title: 'Confirmation',
+                                variant: 'danger',
+                                autoHideDelay: 50000,
+                                solid: true
+                            })
+                        }else{
+                            this.$bvToast.toast( 'An error has ocurred. Please, reload this page.',{
+                                title: 'Confirmation',
+                                variant: 'danger',
+                                autoHideDelay: 50000,
+                                solid: true
+                            })
+                        }
+                    });
+                }
+            });
+            Vue.prototype.$map.on(L.Draw.Event.DELETED, (e) => {
+                var del = Object.keys(e.layers._layers)
+                for(var i = 0 ; i < del.length ; i++ ){
+                    axios.delete(`/zones/${del[i]}`).then((response)=>{
+                        this.$root.$emit('bv::refresh::table','zone-table')
+                        this.$bvToast.toast( 'Data deleted successfully',{
+                            title: 'Confirmation',
+                            variant: 'success',
+                            autoHideDelay: 2000,
+                            solid: true
+                        })
+                    }).catch( e => {
+                        this.$bvToast.toast( 'An error has ocurred',{
+                            title: 'Confirmation',
+                            variant: 'danger',
+                            autoHideDelay: 2000,
+                            solid: true
+                        })
+                    });
+                }
+            });
+        },
         disableMap(){
             Vue.prototype.$map._handlers.forEach(function(handler) {
                 handler.disable();

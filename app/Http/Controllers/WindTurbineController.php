@@ -16,10 +16,11 @@ class WindTurbineController extends Controller
     {
         $data = $this->validate($request, [
             'model' => 'required|unique:wind_turbines,model,NULL,id,user_id,'.Auth::user()->id,
-            'invest_cost' => 'required|numeric|min:1|max:1000000',
+            'invest_cost' => 'required|numeric|min:1|max:10000000',
             'nominal_power' => 'required|numeric|min:1|max:100000000',
             'rotor_diameter' => 'required|numeric|min:1|max:500',
-            'iec_class' => 'required|integer|min:1|max:3'
+            'iec_class' => 'required|integer|min:1|max:3',
+            'om_cost_per_year' => 'required|numeric|min:1|max:2000000'
         ]);
         $data['user_id'] = Auth::user()->id;
         $turbine = new WindTurbine($data);
@@ -44,10 +45,11 @@ class WindTurbineController extends Controller
     public function edit($id, Request $request){
         $data = $this->validate($request, [
             'model' => 'required|unique:wind_turbines,model,'.$id.',id,user_id,'.Auth::user()->id,
-            'invest_cost' => 'required|numeric|min:1|max:1000000',
+            'invest_cost' => 'required|numeric|min:1|max:10000000',
             'nominal_power' => 'required|numeric|min:1|max:100000000',
             'rotor_diameter' => 'required|numeric|min:1|max:500',
-            'iec_class' => 'required|integer|min:1|max:3'
+            'iec_class' => 'required|integer|min:1|max:3',
+            'om_cost_per_year' => 'required|numeric|min:1|max:2000000'
         ]);
         $turbine = WindTurbine::findOrFail($id);
         $turbine->update($data);

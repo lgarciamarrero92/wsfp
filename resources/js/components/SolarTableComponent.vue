@@ -8,7 +8,13 @@
             :total-rows="totalRows"
             :per-page="3"
             :current-page="currentPage"
+            show-empty
         >
+            <template v-slot:table-busy>
+                <div class = "text-center">
+                    <b-spinner></b-spinner>
+                </div>
+            </template>
             <template v-slot:cell(actions)="row">
                 <b-button
                     @click="editHandle(row.item)"

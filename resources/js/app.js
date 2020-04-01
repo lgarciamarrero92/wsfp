@@ -25,9 +25,15 @@ Vue.component('map-component', require('./components/MapComponent.vue').default)
 Vue.component('control-panel-component', require('./components/ControlPanelComponent.vue').default);
 Vue.component('location-details-modal', require('./components/LocationDetailsModalComponent.vue').default);
 Vue.component('add-panel-modal', require('./components/AddPanelModalComponent.vue').default);
+Vue.component('busy-modal', require('./components/BusyModalComponent.vue').default);
 Vue.component('add-turbine-modal', require('./components/AddTurbineModalComponent.vue').default);
+Vue.component('add-edit-zone-modal', require('./components/AddEditZoneModalComponent.vue').default);
 Vue.component('solar-table', require('./components/SolarTableComponent.vue').default);
 Vue.component('wind-table', require('./components/WindTableComponent.vue').default);
+Vue.component('zone-table', require('./components/ZoneTableComponent.vue').default);
+Vue.component('results-table', require('./components/ResultsTableComponent.vue').default);
+
+
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to

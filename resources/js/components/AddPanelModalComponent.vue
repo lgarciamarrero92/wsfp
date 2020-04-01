@@ -119,6 +119,26 @@
                     {{item}}
                 </b-form-invalid-feedback>
             </b-form-group>
+
+            <b-form-group
+                class="col-6"
+                id="om-cost-group"
+                label="O&M cost ($/year):"
+            >
+                <b-form-input
+                    id = "om-cost"
+                    :disabled="isBusy"
+                    :state="!form.validated?null:form.errors.om_cost_per_year == undefined"
+                    v-model="form.om_cost_per_year"
+                    required
+                    placeholder="Enter invest cost"
+                >
+                    
+                </b-form-input>
+                <b-form-invalid-feedback :force-show="form.errors.om_cost_per_year != undefined" v-for="(item,index) in form.errors.om_cost_per_year" :key = index>
+                    {{item}}
+                </b-form-invalid-feedback>
+            </b-form-group>
         </b-form>
 
   </b-modal>
@@ -137,6 +157,7 @@ export default {
                 width: null,
                 invest_cost: null,
                 nominal_power: null,
+                om_cost_per_year: null,
                 errors: {},
                 validated: null,
             },
@@ -196,6 +217,7 @@ export default {
             this.form.width= null
             this.form.invest_cost= null
             this.form.nominal_power= null
+            this.form.om_cost_per_year=null
             this.form.errors= {}
             this.form.validated= null
         },
@@ -229,6 +251,7 @@ export default {
                 this.form.width=response.data.width
                 this.form.invest_cost=response.data.invest_cost
                 this.form.nominal_power= response.data.nominal_power
+                this.form.om_cost_per_year = response.data.om_cost_per_year
                 this.busy = false
             }).catch( (e)=>{
 
