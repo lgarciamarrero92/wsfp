@@ -77,50 +77,12 @@
         },
         mounted() {
 
-            this.$root.$on('bv::dropdown::show', evt => {
-                if(evt.componentId == "solar"){
-                    this.getSolarPanels()
-                }
-                if(evt.componentId == "eolic"){
-                    this.getWindTurbines()
-                }
-            })
-
             this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
             this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
             this.cfiec1 = new L.leafletGeotiff('CUB_capacity-factor_IEC1.tif')
             this.cfiec2 = new L.leafletGeotiff('CUB_capacity-factor_IEC2.tif')
             this.cfiec3 = new L.leafletGeotiff('CUB_capacity-factor_IEC3.tif')
             this.pvout = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif')
-            
-            this.$root.$on('zonesCreated', (id) => {
-                this.zoneID.push(id)
-                this.update(id)
-                //Select all facilities for this zone
-                    this.solarPanelsSelected[id] = []
-                    this.windTurbinesSelected[id] = []
-                    axios.get('/solar_panels').then( (response) => {
-                        let items = []
-                        response.data.forEach(element => {
-                            items.push({value: element.id, text: element.model}) 
-                        });
-                        this.solarPanels = items
-                        this.solarPanels.forEach(element=>{
-                            this.solarPanelsSelected[id].push(element.value)
-                        })
-                    })
-                    axios.get('/wind_turbines').then( (response) => {
-                        let items = []
-                        response.data.forEach(element => {
-                            items.push({value: element.id, text: element.model}) 
-                        });
-                        this.windTurbines = items
-                        this.windTurbines.forEach(element=>{
-                            this.windTurbinesSelected[id].push(element.value)
-                        })
-                    })
-                //
-            })
             
             Vue.prototype.$map.on(L.Draw.Event.EDITED, (e) => {
                 var edit = Object.keys(e.layers._layers)
@@ -206,6 +168,7 @@
                 let sp = []
                 let wt = []
                 let model = {}
+
                 await axios.get('/solar_panels').then( (response) => {
                     for (let index = 0; index < response.data.length; index++) {
                         const element = response.data[index];
@@ -1475,7 +1438,6 @@
                         p = turf.destination(p, distance, bearing);
                     }
                     if( lp != fp ){
-                        
                         var cr = turf.destination(lp, h*1.88/1000.0, 0);
                         var cl = turf.destination(fp, h*1.88/1000.0, 0);
                         var points = turf.featureCollection([fp,lp,cl,cr]);
