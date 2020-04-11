@@ -16,7 +16,26 @@ Route::get('/', function () {
     //return view('welcome');
     return redirect('/home');
 });
-
+//Localization
+Route::get('/prueba', function () {
+    $path = public_path('CUB_capacity-factor_IEC1.tif');
+    $fp=file($path);
+    dd($fp);
+});
+Route::get('/js/lang.js', function () {
+    $strings = Cache::rememberForever('lang.js', function(){
+        $lang = config('app.locale');
+        if($lang == 'en')return '';
+        $path = resource_path('lang/'.$lang.'.json');
+        $json = json_decode(file_get_contents($path),true);
+        return $json;
+    });
+    header('Content-Type: text/javascript');
+    echo('window.i18n = '.json_encode($strings).';');
+    exit();
+});
+Route::get('/translate/{locale}','TranslateController@set')->name('translate');
+//
 Route::get('/home', 'HomeController@index')->name('home');
  //Api
  //Solar panels

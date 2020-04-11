@@ -16,7 +16,7 @@ class SolarPanelController extends Controller
     {
         $data = $this->validate($request, [
             'model' => 'required|unique:solar_panels,model,NULL,id,user_id,'.Auth::user()->id,
-            'invest_cost' => 'required|numeric|min:1|max:1000000',
+            'invest_cost' => 'required|numeric|min:1|max:10000',
             'nominal_power' => 'required|numeric|min:1|max:1000000',
             'width' => 'required|numeric|min:0.1|max:10',
             'height' => 'required|numeric|min:0.1|max:10',

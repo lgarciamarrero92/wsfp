@@ -2,7 +2,7 @@
     <b-modal 
         id="add-panel" 
         centered 
-        :title="isEdited == false?'Add solar panel':'Edit solar panel'"
+        :title="isEdited == false?__('Add solar panel'): __('Edit solar panel')"
         no-close-on-esc
         no-close-on-backdrop
         size="md"
@@ -11,12 +11,12 @@
         @show="showModal"
     >
         <template slot="modal-footer" slot-scope="{ ok, cancel }">
-            <b-button variant="secondary" :disabled="isBusy" @click="cancel()">Cancel</b-button>
+            <b-button variant="secondary" :disabled="isBusy" @click="cancel()">{{__('Cancel')}}</b-button>
             <b-button variant="primary" :disabled="isBusy" @click="ok()">
-                <template v-if="!isBusy">Save</template>
+                <template v-if="!isBusy">{{__('Save')}}</template>
                 <template v-if="isBusy">
                     <b-spinner small></b-spinner>
-                    <span class="ml-2">Busy...</span>
+                    <span class="ml-2">{{__('Busy')}}...</span>
                 </template>
             </b-button>
         </template>
@@ -25,7 +25,7 @@
             <b-form-group
                 class="col-6"
                 id="model-group"
-                label="Model:"
+                :label="__('Model')"
             >
                 <b-form-input
                     id = "model"
@@ -33,7 +33,7 @@
                     :state="!form.validated?null:form.errors.model == undefined"
                     v-model="form.model"
                     required
-                    placeholder="Enter model"
+                    :placeholder="__('Enter model')"
                 >
                 </b-form-input>
                 <b-form-invalid-feedback :force-show="form.errors.model != undefined" v-for="(item,index) in form.errors.model" :key = index>
@@ -44,7 +44,7 @@
             <b-form-group
                 class="col-6"
                 id="nominal-power-group"
-                label="Nominal power (Wp):"
+                :label="__('Nominal power')+' (Wp)'"
             >
                 <b-form-input
                     id = "nominal-power"
@@ -52,7 +52,7 @@
                     :state="!form.validated?null:form.errors.nominal_power == undefined"
                     v-model="form.nominal_power"
                     required
-                    placeholder="Enter nominal power"
+                    :placeholder="__('Enter nominal power')"
                 >
                 </b-form-input>
                 <b-form-invalid-feedback :force-show="form.errors.nominal_power != undefined" v-for="(item,index) in form.errors.nominal_power" :key = index>
@@ -63,7 +63,7 @@
             <b-form-group
                 class="col-6"
                 id="height-group"
-                label="Height (m):"
+                :label="__('Height') + ' (m)'"
             >
                 <b-form-input
                     id = "height"
@@ -71,7 +71,7 @@
                     :state="!form.validated?null:form.errors.height == undefined"
                     v-model="form.height"
                     required
-                    placeholder="Enter height"
+                    :placeholder="__('Enter Height')"
                 >
                     
                 </b-form-input>
@@ -83,7 +83,7 @@
             <b-form-group
                 class="col-6"
                 id="width-group"
-                label="Width (m):"
+                :label="__('Width') + ' (m)'"
             >
                 <b-form-input
                     id = "width"
@@ -91,7 +91,7 @@
                     :state="!form.validated?null:form.errors.width == undefined"
                     v-model="form.width"
                     required
-                    placeholder="Enter width"
+                    :placeholder="__('Enter Width')"
                 >
                     
                 </b-form-input>
@@ -103,7 +103,7 @@
             <b-form-group
                 class="col-6"
                 id="invest-cost-group"
-                label="Invest cost ($):"
+                :label="__('Invest cost ($)')"
             >
                 <b-form-input
                     id = "invest-cost"
@@ -111,7 +111,7 @@
                     :state="!form.validated?null:form.errors.invest_cost == undefined"
                     v-model="form.invest_cost"
                     required
-                    placeholder="Enter invest cost"
+                    :placeholder="__('Enter invest cost')"
                 >
                     
                 </b-form-input>
@@ -123,7 +123,7 @@
             <b-form-group
                 class="col-6"
                 id="om-cost-group"
-                label="O&M cost ($/year):"
+                :label="__('O&M cost ($/year)')"
             >
                 <b-form-input
                     id = "om-cost"
@@ -131,7 +131,7 @@
                     :state="!form.validated?null:form.errors.om_cost_per_year == undefined"
                     v-model="form.om_cost_per_year"
                     required
-                    placeholder="Enter invest cost"
+                    :placeholder="__('Enter O&M cost')"
                 >
                     
                 </b-form-input>
@@ -177,8 +177,8 @@ export default {
                 axios.post('/solar_panels',this.form).then( () =>{
                     this.resetForm()
                     this.$root.$emit('bv::refresh::table','solar-table')
-                    this.$bvToast.toast( 'Data saved successfully',{
-                        title: 'Confirmation',
+                    this.$bvToast.toast( `${this.__('Data saved successfully')}`,{
+                        title: `${this.__('Confirmation')}`,
                         variant: 'success',
                         autoHideDelay: 2000,
                         solid: true
@@ -194,8 +194,8 @@ export default {
                     this.resetForm()
                     this.$bvModal.hide('add-panel')
                     this.$root.$emit('bv::refresh::table','solar-table')
-                    this.$bvToast.toast( 'Data edited successfully',{
-                        title: 'Confirmation',
+                    this.$bvToast.toast( `${this.__('Data edited successfully')}`,{
+                        title: `${this.__('Confirmation')}`,
                         variant: 'success',
                         autoHideDelay: 2000,
                         solid: true

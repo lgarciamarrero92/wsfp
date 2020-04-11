@@ -2,7 +2,7 @@
     <b-modal 
         id="add-edit-zone" 
         centered 
-        :title="isEdited == false?'Add zone':'Edit zone'"
+        :title="isEdited == false?__('Add') + ' ' + __('Zone'): __('Edit') + ' ' + __('Zone')"
         no-close-on-esc
         no-close-on-backdrop
         size="sm"
@@ -11,12 +11,12 @@
         @show="showModal"
     >
         <template slot="modal-footer" slot-scope="{ ok, cancel }">
-            <b-button variant="secondary" :disabled="isBusy" @click="cancel()">Cancel</b-button>
+            <b-button variant="secondary" :disabled="isBusy" @click="cancel()">{{__('Cancel')}}</b-button>
             <b-button variant="primary" :disabled="isBusy" @click="ok()">
-                <template v-if="!isBusy">Save</template>
+                <template v-if="!isBusy">{{__('Save')}}</template>
                 <template v-if="isBusy">
                     <b-spinner small></b-spinner>
-                    <span class="ml-2">Busy...</span>
+                    <span class="ml-2">{{__('Busy')}}...</span>
                 </template>
             </b-button>
         </template>
@@ -25,7 +25,7 @@
             <b-form-group
                 class="col-12"
                 id="name-group"
-                label="Name:"
+                :label="__('Name')"
             >
                 <b-form-input
                     id = "name"
@@ -33,7 +33,7 @@
                     :state="!form.validated?null:form.errors.name == undefined"
                     v-model="form.name"
                     required
-                    placeholder="Enter name for this zone"
+                    :placeholder="__('Enter name for this zone')"
                 >
                 </b-form-input>
                 <b-form-invalid-feedback :force-show="form.errors.name != undefined" v-for="(item,index) in form.errors.name" :key = index>
@@ -44,7 +44,7 @@
             <b-form-group
                 class="col-12"
                 id="type-group"
-                label="Type:"
+                :label="__('Type')"
             >
                 <b-form-radio-group
                     id = "type"
@@ -73,8 +73,8 @@ export default {
         return {
             busy: false,
             radioOptions: [
-                {text: "Solar park",value: "solar"},
-                {text: "Eolic farm",value: "eolic"}
+                {text: this.__('Solar park'),value: "solar"},
+                {text: this.__('Eolic farm'),value: "eolic"}
             ],
             isEdited: false,
             idEdited: null,
@@ -109,12 +109,16 @@ export default {
                             layer.options.opacity = 0.5
                             layer.options.fillOpacity = 0.2
                             Vue.prototype.$drawnItems.addLayer(layer)
+                            layer.on('click', (e) => {
+                                this.$root.$emit('zoneEdited',response.data);
+                                this.$bvModal.show('add-edit-zone'); 
+                            })
                         }
                     })
                     this.$bvModal.hide('add-edit-zone')
                     this.$root.$emit('bv::refresh::table','zone-table')
-                    this.$bvToast.toast( 'Data saved successfully',{
-                        title: 'Confirmation',
+                    this.$bvToast.toast( `${this.__('Data saved successfully')}`,{
+                        title: `${this.__('Confirmation')}`,
                         variant: 'success',
                         autoHideDelay: 2000,
                         solid: true
@@ -130,8 +134,8 @@ export default {
                     this.resetForm()
                     this.$bvModal.hide('add-edit-zone')
                     this.$root.$emit('bv::refresh::table','zone-table')
-                    this.$bvToast.toast( 'Data edited successfully',{
-                        title: 'Confirmation',
+                    this.$bvToast.toast( `${this.__('Data edited successfully')}`,{
+                        title: `${this.__('Confirmation')}`,
                         variant: 'success',
                         autoHideDelay: 2000,
                         solid: true

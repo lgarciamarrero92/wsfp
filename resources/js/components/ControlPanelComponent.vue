@@ -4,35 +4,124 @@
         <b-card 
             no-body
         >
-            <b-tabs v-model="tabIndex" card>
-                <b-tab title="Zones">
+            <b-tabs v-model="tabIndex" card >
+                <b-tab :title="__('Zones')">
                     <zone-table />
                 </b-tab>
-                <b-tab title="Results">
-                    <results-table :items="results"/>
-                </b-tab>
-                <b-tab title="Solar panels">
+                <b-tab :title="__('Solar panels')">
                     <solar-table />
                 </b-tab>
-                <b-tab title="Wind turbines">
+                <b-tab :title="__('Wind turbines')">
                     <wind-table />
                 </b-tab>
-                <b-tab title="Charts">
-                    <b-alert :show ="results.length == 0" variant="info">Run simulations first</b-alert>
+                <b-tab :title="__('Run simulations')">
+                    <b-form class = "row">
+                        <b-form-group
+                            class="col-6"
+                            id="size-group"
+                            :label="__('Poblation size')"
+                        >
+                            <b-form-input 
+                                id="size" 
+                                size="sm" 
+                                type="number" 
+                                min="10" 
+                                max="500" 
+                                v-model="poblationSize"
+                                :state="(!(poblationSize<10 || poblationSize>500))?null:false"
+                            >
+
+                            </b-form-input>
+                            <b-form-invalid-feedback :force-show="poblationSize<10 || poblationSize>500">
+                                {{__('Type a number between 10 and 500')}}
+                            </b-form-invalid-feedback>
+                        </b-form-group>
+
+                        <b-form-group
+                            class="col-6"
+                            id="generations-group"
+                            :label="__('How many generations?')"
+                        >
+                            <b-form-input 
+                                id="generations" 
+                                size="sm" 
+                                type="number" 
+                                min="20" 
+                                max="2000" 
+                                v-model="generations"
+                                :state="(!(generations<20 || generations>2000))?null:false"
+                            >
+
+                            </b-form-input>
+                            <b-form-invalid-feedback :force-show="(generations<20 || generations>2000)">
+                                {{__('Type a number between 20 and 2000')}}
+                            </b-form-invalid-feedback>
+                        </b-form-group>
+                        <b-form-group
+                            class="col-6"
+                        >
+                            <b-button 
+                                @click="makeModel()" 
+                                variant="primary" 
+                                size="sm"
+                                :disabled="(generations<20 || generations>2000) || (poblationSize<10 || poblationSize>500)"
+                            >
+                                {{__('Run')}}
+                            </b-button>
+                        </b-form-group>
+
+                    </b-form>
+                </b-tab>
+                <b-tab :title="__('Results')">
+                    <results-table :items="results"/>
+                </b-tab>
+                <b-tab :title="__('Charts')">
+                    <b-alert :show ="results.length == 0" variant="info">{{ __('Run simulations first') }}</b-alert>
                     <div id = "myDiv">
-                        
                     </div>
                 </b-tab>
-                <!--b-tab title="Charts2">
-                    <div id = "myDiv2">
-
-                    </div>
-                </b-tab-->
             </b-tabs>
             <b-card-footer>
-                <b-button variant="primary" @click="$bvModal.show('add-panel')"> Add solar panel</b-button>
-                <b-button variant="primary" @click="$bvModal.show('add-turbine')"> Add eolic turbine</b-button>
-                <b-button variant="primary" @click="makeModel()" > Run simulations</b-button>
+                <!--b-button variant="primary" @click="$bvModal.show('add-panel')"> {{__('Add solar panel')}} </b-button>
+                <b-button variant="primary" @click="$bvModal.show('add-turbine')"> {{__('Add eolic turbine')}} </b-button>
+                <b-button variant="primary" @click="makeModel()" > {{__('Run simulations')}} </b-button-->
+                <div class="text-center" style="line-height: 1; margin-bottom: 2px;">
+                    <div>
+                        <small class="text-muted">
+                            Solar GIS Data obtained from the
+                        </small>
+                        <small 
+                            class="text-primary"
+                            v-b-tooltip.hover
+                            title="A free, web-based application developed, and operated by the company Solargis s.r.o. on behalf of the World Bank Group, utilizing Solargis data, with funding provided by the Energy Sector Management Assistance Program (ESMAP). For additional information: https://globalsolaratlas.info"
+                        >
+                            Global Solar Atlas 2.0
+                        </small>
+                    </div>
+                    <div>
+                        <small class="text-muted">
+                            Eolic GIS Data obtained from the
+                        </small>
+                        <small 
+                            class="text-primary"
+                            v-b-tooltip.hover
+                            title="A free, web-based application developed, owned and operated by the Technical University of Denmark (DTU). The Global Wind Atlas 3.0 is released in partnership with the World Bank Group, utilizing data provided by Vortex, using funding provided by the Energy Sector Management Assistance Program (ESMAP). For additional information: https://globalwindatlas.info"
+                        >
+                            Global Wind Atlas 3.0
+                        </small>
+                    </div>
+                </div>
+                <div class="text-center" style="line-height: 1;">
+                    <small class="text-muted">
+                        ©2020 Luis E. Garcia Marrero
+                    </small>
+                </div>
+                <div class="text-center" style="line-height: 1;">
+                    <small>
+                        <a href="mailto:lgarciamarrero92@gmail.com"> lgarciamarrero92@gmail.com </a>
+                    </small>
+                </div>
+
             </b-card-footer>
         </b-card>
     </div>
@@ -41,9 +130,12 @@
 <script>
     import * as turf from '@turf/turf'
     import 'leaflet-geotiff/leaflet-geotiff';
+    //const GeoTIFF = require('geotiff') 
     export default {
         data () {
             return {
+                poblationSize: 100,
+                generations: 100,
                 tabIndex: 0,
                 model: {},
                 results: [],
@@ -76,9 +168,24 @@
             Vue.prototype.$user_id = this.user_id
         },
         mounted() {
-
+            let options = {
+                bounds: [[20.752307,-76.758902],[20.875548,-76.675165]]
+            }
+            /*
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'CUB_power-density_50m.tif' , true);
+                xhr.responseType = 'arraybuffer';
+                xhr.onload = function(e) {
+                var tiff = GeoTIFF.parse(this.response);
+                var image = tiff.getImage();
+                console.log(image)
+            // ...
+            }
+            xhr.send();
+            */
             this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
             this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
+            console.log(this.eolic)
             this.cfiec1 = new L.leafletGeotiff('CUB_capacity-factor_IEC1.tif')
             this.cfiec2 = new L.leafletGeotiff('CUB_capacity-factor_IEC2.tif')
             this.cfiec3 = new L.leafletGeotiff('CUB_capacity-factor_IEC3.tif')
@@ -544,7 +651,13 @@
                 let Parents = this.binaryTournamentSelection(P)
                 let Q = []
                 for(let i = 0 ; i < Parents.length ; i+=2 ){
-                    let children = this.crossover(Parents[i],Parents[i+1])
+                    var children = {}
+                    if(i+1<Parents.length){
+                        children = this.crossover(Parents[i],Parents[i+1])
+                    }
+                    else{
+                        children = this.crossover(Parents[i],Parents[i])
+                    }
                     let mutated = this.mutate(children)
                     Q.push(mutated[0])
                     Q.push(mutated[1])
@@ -1099,22 +1212,22 @@
                             dimensions: [
                                 {
                                     range: [0, this.mE/1000000],
-                                    label: 'Energy (GWh/año)',
+                                    label: this.__('Energy (GWh/year)'),
                                     values: []
                                 },
                                 {
                                     range: [0, this.mC/1000000],
-                                    label: 'Costs (Millions of dolars/year)',
+                                    label: this.__('Costs (Millions of dolars/year)'),
                                     values: []
                                 },
                                 {
                                     range: [0, this.mSA/10000],
-                                    label: 'Impacted area (Panels) (ha)',
+                                    label: this.__('Panels impacted area (ha)'),
                                     values: []
                                 },
                                 {
                                     range: [0, this.mWA/10000],
-                                    label: 'Impacted area (Turbines) (ha)',
+                                    label: this.__('Turbines impacted area (ha)'),
                                     values: []
                                 },
                             ]
@@ -1145,7 +1258,7 @@
                 };
                 */
                 //this.doBetter()
-                this.results = this.nsga2(100,100)
+                this.results = this.nsga2(Number(this.poblationSize),Number(this.generations) )
                 //console.log('Begin Random')
                 //await this.compare(3)
                 /*
@@ -1280,6 +1393,12 @@
                 console.log(results);
                 */
                 this.$bvModal.hide('busy');
+                this.$bvToast.toast( `${this.__('Active Results and Charts tabs to inspect results')}`,{
+                    title: `${this.__('Information')}`,
+                    variant: 'success',
+                    autoHideDelay: 5000,
+                    solid: true
+                })
             },
             getSolarPanels(){
                 this.dropDownBusy = true

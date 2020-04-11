@@ -11,7 +11,7 @@
 
     <!-- Scripts -->
     <script src="{{ mix('js/app.js') }}" defer></script>
-
+    <script src="/js/lang.js"></script>
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
@@ -41,6 +41,29 @@
 
                     <!-- Right Side Of Navbar -->
                     <ul class="navbar-nav ml-auto">
+                        @php
+                            $locale = config('app.locale');
+                        @endphp
+                        <!-- Language Links -->
+                        <li class="nav-item dropdown">
+                            <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                {{__("Language")}} ({{$locale}})
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="translate/en">
+                                    English
+                                </a>
+                                <a class="dropdown-item" href="translate/es">
+                                    Español
+                                </a>
+                                <!--a class="dropdown-item" href="translate/de">
+                                    Deutsch
+                                </a>
+                                <a class="dropdown-item" href="translate/fr">
+                                    Francais
+                                </a-->
+                            </div>
+                        </li>
                         <!-- Authentication Links -->
                         @guest
                             <li class="nav-item">

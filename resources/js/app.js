@@ -9,6 +9,10 @@ window.Vue = require('vue');
 import BootstrapVue from 'bootstrap-vue'
 Vue.use(BootstrapVue)
 
+Vue.prototype.__ = string =>{
+    return window.i18n[string]?window.i18n[string]:string
+}
+
 /**
  * The following block of code may be used to automatically register your
  * Vue components. It will recursively scan this directory for the Vue

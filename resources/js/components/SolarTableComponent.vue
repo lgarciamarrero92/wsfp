@@ -1,5 +1,16 @@
 <template>
     <div>
+        <div class="d-flex justify-content-end">
+            <b-button
+                style="margin-bottom: 5px;"
+                @click="$bvModal.show('add-panel')"
+                size="sm"
+                variant="outline-success"
+                v-b-tooltip.hover
+                :title="__('Add solar panel')"
+            > <i class="fa fa-plus"></i> 
+            </b-button>
+        </div>
         <b-table
             ref="solarTable"
             id = "solar-table"
@@ -9,6 +20,7 @@
             :per-page="3"
             :current-page="currentPage"
             show-empty
+            :empty-text="__('There are no records to show')"
         >
             <template v-slot:table-busy>
                 <div class = "text-center">
@@ -21,7 +33,7 @@
                     size="sm"
                     variant="outline-info"
                     v-b-tooltip.hover
-                    title="Edit"
+                    :title="__('Edit')"
                 > <i class="fa fa-edit"></i> 
                 </b-button>
                 <b-button
@@ -29,7 +41,7 @@
                     size="sm"
                     variant="outline-danger"
                     v-b-tooltip.hover
-                    title="Delete"
+                    :title="__('Delete')"
                 > <i class="fa fa-trash"></i> 
                 </b-button>
             </template>
@@ -51,7 +63,13 @@ export default {
     data () {
         return {
             currentPage: 1,
-            fields: ['model',{key: 'nominal_power',label: 'Power (Wp)'},{key:'invest_cost',label: 'Inv. Cost ($)'},{key:'dimentions',label:'Dimentions (m)'},'actions'],
+            fields: [
+                {key: 'model', label: this.__('Model')},
+                {key: 'nominal_power',label: this.__('Power') + ' (Wp)'},
+                {key:'invest_cost', label: this.__('Inv. Cost ($)')},
+                {key:'dimentions',label:this.__('Dimentions (m)')},
+                {key: 'actions', label: this.__('Actions')}
+            ],
             totalRows: 1,
         }
     },
@@ -73,13 +91,13 @@ export default {
         },
         deleteHandle(item){
             this.$bvModal.msgBoxConfirm(
-                `Are you sure you want to delete the solar panel ${item.model}?`,
+                `${this.__('Are you sure you want to delete the solar panel')} ${item.model}?`,
                 {
-                    title: "Confirm",
+                    title: `${this.__('Confirm')}`,
                     size: "sm",
                     okVariant: "danger",
-                    okTitle: "Yes",
-                    cancelTitle: "No",
+                    okTitle: `${this.__('Yes')}`,
+                    cancelTitle: `${this.__('No')}`,
                     footerClass: "p-2",
                     hideHeaderClose: false,
                     centered: true
@@ -90,8 +108,8 @@ export default {
                     axios.delete(`/solar_panels/${item.id}`)
                     .then(response => {
                         this.$refs.solarTable.refresh();
-                        this.$bvToast.toast( 'Data deleted successfully',{
-                            title: 'Confirmation',
+                        this.$bvToast.toast( `${this.__('Data deleted successfully')}`,{
+                            title: `${this.__('Confirmation')}`,
                             variant: 'success',
                             autoHideDelay: 2000,
                             solid: true
@@ -109,3 +127,8 @@ export default {
     }
 }
 </script>
+<style>
+.card-body{
+    padding: 0.8rem;
+}
+</style>

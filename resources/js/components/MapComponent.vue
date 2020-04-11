@@ -71,8 +71,8 @@ export default {
             "ints": {"x": 1, "y": 1}
         };
 
-        results = solver.Solve(model);
-        console.log(results);
+        //results = solver.Solve(model);
+        //console.log(results);
         //end test
         let vm = this
         
@@ -90,6 +90,7 @@ export default {
         //var mqi = L.tileLayer("http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png", {subdomains: ['otile1','otile2','otile3','otile4']});
         var tiles = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
             maxZoom: 20,
+            attribution: 'Map data ©2020 Google',
             subdomains:['mt0','mt1','mt2','mt3']
         });
         /*
@@ -132,11 +133,17 @@ export default {
         bounds = L.latLngBounds(southWest, northEast);
         
         Vue.prototype.$map = L.map('map', {
-            center: bounds.getCenter(), 
+            center: bounds.getCenter(),
+            zoomControl: false, 
             zoom: 6.4, 
             minZoom: 6.4,
             layers: [googleSat,labels]
         });
+
+        L.control.zoom({
+            zoomInTitle: this.__('Zoom in'),
+            zoomOutTitle: this.__('Zoom out')
+        }).addTo(this.$map)
 
         Vue.prototype.$map.setMaxBounds(bounds);
 
@@ -153,9 +160,11 @@ export default {
             this.layerActive = e.name
         });
         
+        
 
         L.control.layers(baseMaps, overlayMaps).addTo(Vue.prototype.$map);
-
+        //Search control 
+        /*
         const provider = new OpenStreetMapProvider();
 
         const searchControl = new GeoSearchControl({
@@ -164,11 +173,59 @@ export default {
         })
 
         Vue.prototype.$map.addControl(searchControl);
-        
+        */
         this.initDraw()
     },
     methods: {
         async initDraw(){
+            
+            L.drawLocal.draw.toolbar.buttons.polygon = this.__('Draw a polygon')
+            L.drawLocal.draw.toolbar.buttons.rectangle = this.__('Draw a rectangle')
+            L.drawLocal.edit.toolbar.buttons.edit = this.__('Edit zones')
+            L.drawLocal.edit.toolbar.buttons.remove = this.__('Delete zones')
+            
+            L.drawLocal.edit.toolbar.actions.save={
+                text: this.__('Save'),
+                title: this.__('Save changes')
+            }
+            L.drawLocal.edit.toolbar.actions.cancel={
+                text: this.__('Cancel'),
+                title: this.__('Cancel editing, discards all changes'),
+            }
+            L.drawLocal.edit.handlers.edit.tooltip = {
+                text: this.__('Drag handles or markers to edit features.'),
+                subtext: this.__('Click cancel to undo changes.')
+            }
+            L.drawLocal.edit.handlers.remove.tooltip = {
+                text: this.__('Click on a feature to remove.')
+            }
+            L.drawLocal.draw.toolbar.actions = {
+                text: this.__('Cancel'),
+                title: this.__('Cancel drawing')
+            }
+
+            L.drawLocal.draw.toolbar.finish = {
+                text: this.__('Finish'),
+                title: this.__('Finish drawing')
+            }
+
+            L.drawLocal.draw.toolbar.undo = {
+                text: this.__('Delete last point'),
+                title: this.__('Delete last point')
+            }
+                
+            
+            L.drawLocal.draw.handlers.polygon.tooltip = {
+                start: this.__('Click to start drawing shape.'), 
+                cont: this.__('Click to continue drawing shape.'),
+                end: this.__('Click first point to close this shape.'),
+            }
+            L.drawLocal.draw.handlers.rectangle.tooltip = {
+                start: this.__('Click and drag to draw rectangle.')
+            }
+            L.drawLocal.draw.handlers.simpleshape.tooltip = {
+                end: this.__('Release mouse to finish drawing.')
+            }
             
             Vue.prototype.$drawnItems = new L.FeatureGroup();
             Vue.prototype.$map.addLayer(Vue.prototype.$drawnItems);
@@ -199,6 +256,7 @@ export default {
                 },
                 edit: {
                     featureGroup: Vue.prototype.$drawnItems, //REQUIRED!!
+                    remove: false
                 }
             };
 
@@ -219,16 +277,24 @@ export default {
                                 layer.options.weight = 4
                                 layer.options.opacity = 0.5
                                 layer.options.fillOpacity = 0.2
+                                /*
+                                layer.bindTooltip(element.name,{
+                                    permanent: true,
+                                    direction: 'center'
+                                })
+                                */
                                 Vue.prototype.$drawnItems.addLayer(layer)
-                                this.$root.$emit('zonesCreated',layer._leaflet_id)
+                                //console.log(layer.getBounds());
+                                layer.on('click', (e) => {
+                                    this.$root.$emit('zoneEdited',element.id);
+                                    this.$bvModal.show('add-edit-zone'); 
+                                })
                             }
                         })
                     })
                 }
             })
-
             
-
             Vue.prototype.$map.on(L.Draw.Event.DRAWSTART, (e) => {
                 this.isDrawing = true
             })
@@ -258,8 +324,8 @@ export default {
                     var polygon_for_db = JSON.stringify(polygon);
                     axios.put(`/zones/${edit[i]}`,{'feature' : polygon_for_db,'area': area(polygon)}).then((response)=>{
                         layer._leaflet_id = response.data
-                        this.$bvToast.toast( 'Data edited successfully',{
-                            title: 'Confirmation',
+                        this.$bvToast.toast( `${this.__('Data edited successfully')}`,{
+                            title: `${this.__('Confirmation')}`,
                             variant: 'success',
                             autoHideDelay: 2000,
                             solid: true
@@ -280,27 +346,6 @@ export default {
                                 solid: true
                             })
                         }
-                    });
-                }
-            });
-            Vue.prototype.$map.on(L.Draw.Event.DELETED, (e) => {
-                var del = Object.keys(e.layers._layers)
-                for(var i = 0 ; i < del.length ; i++ ){
-                    axios.delete(`/zones/${del[i]}`).then((response)=>{
-                        this.$root.$emit('bv::refresh::table','zone-table')
-                        this.$bvToast.toast( 'Data deleted successfully',{
-                            title: 'Confirmation',
-                            variant: 'success',
-                            autoHideDelay: 2000,
-                            solid: true
-                        })
-                    }).catch( e => {
-                        this.$bvToast.toast( 'An error has ocurred',{
-                            title: 'Confirmation',
-                            variant: 'danger',
-                            autoHideDelay: 2000,
-                            solid: true
-                        })
                     });
                 }
             });
@@ -436,6 +481,11 @@ export default {
 
 #map {
     width: 100%;
+}
+.leaflet-retina .leaflet-control-layers-toggle{
+    height: 26px;
+    width: 26px;
+    background-size: 15px 15px;
 }
 .rotateimg90 {
   -webkit-transform:rotate(90deg);

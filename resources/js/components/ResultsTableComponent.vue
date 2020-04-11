@@ -2,19 +2,19 @@
     <div>
         <div class="d-flex">
             <div class="mx-2">
-                <label for="range-energy"> Energy: {{getRelativesWeights[0].toFixed(2)}}</label>
+                <label for="range-energy">  {{ __('Energy') + ': ' + getRelativesWeights[0].toFixed(2)}}</label>
                 <b-form-input id="range-energy" min="0" max="10" type="range" v-model="weights[0]"></b-form-input>
             </div>
             <div class="mx-2">
-                <label for="range-costs"> Costs: {{getRelativesWeights[1].toFixed(2)}}</label>
+                <label for="range-costs">  {{ __('Costs') + ': ' + getRelativesWeights[1].toFixed(2)}}</label>
                 <b-form-input id="range-costs" min="0" max="10" type="range" v-model="weights[1]"></b-form-input>
             </div>
             <div class="mx-2">
-                <label for="range-solar-area"> Solar Area: {{getRelativesWeights[2].toFixed(2)}}</label>
+                <label for="range-solar-area"> {{__('Solar Area') + ': ' + getRelativesWeights[2].toFixed(2)}}</label>
                 <b-form-input id = "range-solar-area" min="0" max="10" type="range" v-model="weights[2]" ></b-form-input>
             </div>
             <div class="mx-2">
-                <label for="range-wind-area"> Wind Area: {{getRelativesWeights[3].toFixed(2)}}</label>
+                <label for="range-wind-area">  {{ __('Wind Area') + ': ' + getRelativesWeights[3].toFixed(2)}}</label>
                 <b-form-input id = "range-wind-area" min="0" max="10" type="range" v-model="weights[3]" ></b-form-input>
             </div>
         </div>
@@ -27,6 +27,7 @@
             :per-page="6"
             :current-page="currentPage"
             show-empty
+            :empty-text="__('There are no records to show')"
             small
             responsive
             sticky-header
@@ -42,7 +43,7 @@
                     size="sm"
                     variant="outline-success"
                     v-b-tooltip.hover
-                    title="See in map"
+                    :title="__('See in map')"
                 > <i class="fa fa-map"></i> 
                 </b-button>
                 <b-button
@@ -50,7 +51,7 @@
                     size="sm"
                     variant="outline-info"
                     v-b-tooltip.hover
-                    :title="row.detailsShowing?'Hide details':'See details'"
+                    :title="row.detailsShowing? __('Hide details'): __('See details')"
                 > 
                     <i v-if="row.detailsShowing" class="fa fa-eye-slash"></i>
                     <i v-else class="fa fa-eye"></i> 
@@ -77,6 +78,17 @@
                     <template v-slot:cell(costs)="row">
                         <div>
                             {{(row.item.costs/1000000).toFixed(3)}}
+                        </div>
+                    </template>
+                    <template v-slot:cell(type)="row">
+                        <div v-if="row.item.type == 'eolic'">
+                            {{ __('Eolic') }}
+                        </div>
+                        <div v-if="row.item.type == 'solar'">
+                            {{ __('Solar') }}
+                        </div>
+                        <div v-if="row.item.type == '-'">
+                            -
                         </div>
                     </template>
                 </b-table>
@@ -119,13 +131,13 @@ export default {
             currentPage: 1,
             fields: [
                 
-                {key: 'energy',label: 'Energy (GWh/year)',sortable: true},
-                {key: 'costs',label: 'Costs (Millions of dolars/year)',sortable: true},
-                {key: 'windArea',label: 'Turbines impacted area (ha)',sortable: true},
-                {key: 'solarArea',label: 'Panels impacted area (ha)',sortable: true},
+                {key: 'energy',label: this.__('Energy (GWh/year)'),sortable: true},
+                {key: 'costs',label: this.__('Costs (Millions of dolars/year)'),sortable: true},
+                {key: 'windArea',label: this.__('Turbines impacted area (ha)'),sortable: true},
+                {key: 'solarArea',label: this.__('Panels impacted area (ha)'),sortable: true},
                 {
                     key: 'costOfEnergy',
-                    label: 'Cost of Energy ($/kWh)',
+                    label: this.__('Cost of Energy ($/kWh)'),
                     formatter: (value,key,item) => {
                         return (item.costs/item.energy).toFixed(5)
                     },
@@ -134,7 +146,7 @@ export default {
                 },
                 {
                     key: 'weight',
-                    label: 'Weight',
+                    label: this.__('Weight'),
                     formatter: (value,key,item) => {
                         return Number(( 
                                     (item.energy/this.mE)*this.getRelativesWeights[0]-
@@ -146,10 +158,10 @@ export default {
                     sortable: true,
                     sortByFormatted: true
                 },
-                {key: 'actions',label: 'Actions' /*, stickyColumn: true*/},
+                {key: 'actions',label: this.__('Actions') /*, stickyColumn: true*/},
             ],
             fieldsDetails: [
-                'zone','type','model','number',{key: 'energy',label: 'Energy (GWh/year)',sortable: true},{key: 'costs',label: 'Costs (Millions of dolars/year)',sortable: true},
+                { key: 'zone', label: this.__('Zone') },{ key: 'type', label: this.__('Type')},{ key: 'model', label: this.__('Model')},{ key: 'number', label: this.__('Number')},{key: 'energy',label: this.__('Energy (GWh/year)'),sortable: true},{key: 'costs',label: this.__('Costs (Millions of dolars/year)'),sortable: true},
             ],
             totalRows: 1,
             mE: 0,
