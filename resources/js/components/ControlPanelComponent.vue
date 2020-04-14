@@ -183,9 +183,9 @@
             }
             xhr.send();
             */
-            this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
-            this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
-            console.log(this.eolic)
+            //this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
+            //this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
+            //console.log(this.eolic)
             this.cfiec1 = new L.leafletGeotiff('CUB_capacity-factor_IEC1.tif')
             this.cfiec2 = new L.leafletGeotiff('CUB_capacity-factor_IEC2.tif')
             this.cfiec3 = new L.leafletGeotiff('CUB_capacity-factor_IEC3.tif')

@@ -40,6 +40,7 @@ export default {
     },
     mounted() {
         //Test linear solver
+        /*
         var solver = require("javascript-lp-solver/src/solver"),
         results,
         model = {
@@ -74,6 +75,7 @@ export default {
         //results = solver.Solve(model);
         //console.log(results);
         //end test
+        */
         let vm = this
         
         var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
