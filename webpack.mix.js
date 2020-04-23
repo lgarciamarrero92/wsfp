@@ -1,5 +1,6 @@
 const mix = require('laravel-mix');
 const webpack = require('webpack');
+const ThreadsPlugin = require('threads-plugin')
 /*
  |--------------------------------------------------------------------------
  | Mix Asset Management
@@ -14,10 +15,13 @@ const webpack = require('webpack');
 mix.js('resources/js/app.js', 'public/js').version()
    .sass('resources/sass/app.scss', 'public/css').version();
 
-/*
+
 mix.webpackConfig({
    "plugins": [
-      new webpack.IgnorePlugin(/(fs|child_process)/),
+      new ThreadsPlugin({
+         globalObject: 'self'
+      })
+      //new webpack.IgnorePlugin(/(fs|child_process)/),
    ]
 });
-*/
+

@@ -102,7 +102,6 @@ export default {
                     .then(response => {
                         this.$drawnItems.removeLayer(item.id)
                         this.$refs.zoneTable.refresh();
-                        this.$deleteSuccessfully()
                         this.$bvToast.toast( `${this.__('Data deleted successfully')}`,{
                             title: `${this.__('Confirmation')}`,
                             variant: 'success',

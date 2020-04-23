@@ -7,6 +7,8 @@ require('./bootstrap');
 
 window.Vue = require('vue');
 import BootstrapVue from 'bootstrap-vue'
+import VueWorker from 'vue-worker'
+Vue.use(VueWorker)
 Vue.use(BootstrapVue)
 
 Vue.prototype.__ = string =>{

@@ -168,7 +168,7 @@ export default {
             mC: 0,
             mWA: 0,
             mSA: 0,
-            inMap: null,
+            inMap: [],
             weights: [5,5,5,5]
         }
     },
@@ -181,18 +181,46 @@ export default {
     methods: {
         
         seeInMap(item){
-            if(this.inMap){
-                let zones = Object.keys(this.inMap.details)
-                for(var i = 0 ; i < zones.length; i++ ){
-                    if(this.inMap["details"][zones[i]].distribution)
-                        this.inMap["details"][zones[i]].distribution.removeFrom(Vue.prototype.$map)
-                }
+            if(this.inMap.length){
+                this.inMap.forEach(layer => {
+                    layer.clearLayers()
+                });
+                this.inMap = []
             }
-            this.inMap = item
             let zones = Object.keys(item.details)
             for(var i = 0 ; i < zones.length; i++ ){
-                if(item["details"][zones[i]].distribution)
-                    item["details"][zones[i]].distribution.addTo(Vue.prototype.$map)
+                if(item["details"][zones[i]].distribution){
+                    let gjson = JSON.parse(item["details"][zones[i]].distribution)
+                    if(item["details"][zones[i]].type == "eolic"){
+                        let layer = L.geoJSON( gjson,{
+                            pointToLayer: function(feature,latlng){
+                                return L.marker(latlng, {
+                                    icon: L.icon({
+                                        iconUrl: 'icon_eolic.png',
+                                        iconSize: [50, 50],
+                                        iconAnchor: [25,50]
+                                    })
+                                })
+                            }
+                        })
+                        this.inMap.push(layer)
+                        layer.addTo(Vue.prototype.$map)
+                    }
+                    if(item["details"][zones[i]].type == "solar"){
+                        let layer = L.geoJSON( gjson,{
+                            onEachFeature: function(feature,layer){
+                                layer.bindPopup(feature.properties.popupContent)
+                            },
+                            style: function(feature) {
+                                return feature.properties.style
+                            }
+                        })
+                        this.inMap.push(layer)
+                        layer.addTo(Vue.prototype.$map)
+                    }
+                   // item["details"][zones[i]].distribution.addTo(Vue.prototype.$map)
+                }
+                    
             }
         },
         getDetails(item){

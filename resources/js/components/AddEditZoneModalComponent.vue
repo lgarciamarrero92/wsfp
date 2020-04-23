@@ -108,7 +108,7 @@ export default {
                             layer.options.weight = 4
                             layer.options.opacity = 0.5
                             layer.options.fillOpacity = 0.2
-                            Vue.prototype.$drawnItems.addLayer(layer)
+                            this.$drawnItems.addLayer(layer)
                             layer.on('click', (e) => {
                                 this.$root.$emit('zoneEdited',response.data);
                                 this.$bvModal.show('add-edit-zone'); 
@@ -165,7 +165,6 @@ export default {
     },
     mounted(){
         this.$root.$on('zoneCreated', (polygon) => {
-            console.log(area(polygon))
             var polygon_for_db = JSON.stringify(polygon);
             this.form.area = area(polygon)
             this.form.feature = polygon_for_db

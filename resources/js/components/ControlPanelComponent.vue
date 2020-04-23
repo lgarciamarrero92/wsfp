@@ -128,9 +128,14 @@
 </template>
 
 <script>
+    
     import * as turf from '@turf/turf'
     import 'leaflet-geotiff/leaflet-geotiff';
-    //const GeoTIFF = require('geotiff') 
+    import {spawn,Worker} from 'threads'
+    import cfc from '../scripts/coefficients/main.js'
+    import nsga2 from '../scripts/nsga2/main.js'
+
+    const GeoTIFF = require('geotiff') 
     export default {
         data () {
             return {
@@ -155,22 +160,60 @@
                 area: {},
                 solar: null,
                 eolic: null,
-                cfiec1: null,
-                cfiec2: null,
-                cfiec3: null,
-                pvout: null,
+                cfiec1: 'CUB_capacity-factor_IEC1.tif',
+                cfiec2: 'CUB_capacity-factor_IEC2.tif',
+                cfiec3: 'CUB_capacity-factor_IEC3.tif',
+                pvout: 'PVOUT.tif',
                 progress : 20,
+                tiff: null,
+                zonesPartition: [],
+                cfc: new cfc(),
+                nsga: new nsga2()
             }
         },
         props:{
         },
         created(){
+            /*
+            this.readGisFiles = new Promise( async (resolve,reject) =>{
+                await spawn(new Worker('../scripts/gis/gis.js')).then((data)=>{
+                    data('hello world').then((val)=>{
+                        resolve(val)
+                    })
+                })
+            })
+            this.readGisFiles.then((data)=>{
+                console.log(data)
+            })
+            */
+            /*
+            this.readGisFiles = new Promise( async (resolve,reject) =>{
+                var tiff = null
+                tiff = await GeoTIFF.fromUrl('CUB_capacity-factor_IEC1.tif')
+                this.cfiec1 = await tiff.getImage()
+                tiff = await GeoTIFF.fromUrl('CUB_capacity-factor_IEC2.tif')
+                this.cfiec2 = await tiff.getImage()
+                tiff = await GeoTIFF.fromUrl('CUB_capacity-factor_IEC3.tif')
+                this.cfiec3 = await tiff.getImage()
+                tiff = await GeoTIFF.fromUrl('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif')
+                this.pvout = await tiff.getImage()
+                resolve()
+            })
+            */
             Vue.prototype.$user_id = this.user_id
         },
+
         mounted() {
+            this.cfc.listen.on('progress', (val)=>{
+                this.$root.$emit('coefficients-progress',val)
+            })
+            this.nsga.listen.on('progress', (val)=>{
+                this.$root.$emit('generation-progress',val)
+            })
             let options = {
                 bounds: [[20.752307,-76.758902],[20.875548,-76.675165]]
             }
+
             /*
             var xhr = new XMLHttpRequest();
             xhr.open('GET', 'CUB_power-density_50m.tif' , true);
@@ -184,13 +227,20 @@
             xhr.send();
             */
             //this.solar = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/GTI.tif')
-            //this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif')
+            //this.eolic = new L.leafletGeotiff('CUB_power-density_50m.tif', options )
             //console.log(this.eolic)
-            this.cfiec1 = new L.leafletGeotiff('CUB_capacity-factor_IEC1.tif')
-            this.cfiec2 = new L.leafletGeotiff('CUB_capacity-factor_IEC2.tif')
-            this.cfiec3 = new L.leafletGeotiff('CUB_capacity-factor_IEC3.tif')
-            this.pvout = new L.leafletGeotiff('/Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif')
             
+            /*
+            
+           
+            */
+            //this.readGISFiles()
+            /*
+            this.$map.on('click', async (e) => {
+                console.log( this.tiff.getValueAtLatLng(e.latlng.lat, e.latlng.lng) )
+            })
+            */
+           /*
             Vue.prototype.$map.on(L.Draw.Event.EDITED, (e) => {
                 var edit = Object.keys(e.layers._layers)
                 this.zoneID = Object.keys(Vue.prototype.$drawnItems._layers)
@@ -203,7 +253,8 @@
                 }
                 
             })
-            
+            */
+           /*
             Vue.prototype.$map.on(L.Draw.Event.DELETED, (e) => {
                 var del = Object.keys(e.layers._layers)
                 for(var i = 0 ; i < del.length ; i++ ){
@@ -214,8 +265,71 @@
                 }
                 this.zoneID = Object.keys(Vue.prototype.$drawnItems._layers)
             })
+            */
         },
         methods: {
+            async partitionZone(item,image){
+                return new Promise( async (resolve,reject) => {
+                    var polygon = this.$drawnItems._layers[item].toGeoJSON();
+                    var bbox = turf.bbox(polygon);
+                    var area = this.calcArea(item)
+                
+                    var d = 1 //Grid length in meters
+                    if(area > 10000){ //No more than 1000 points in a grid
+                        d = Math.sqrt(area)/100.0
+                    }
+                    /*
+                        Make a grid with length d in this zone
+                    */
+                    var options = {units: 'meters',mask: polygon};
+                    var grid = turf.pointGrid(bbox, d , options);
+                    /*
+                        Calculate bbox in pixel coordinates
+                    */
+                    bbox = [
+                        Math.min(bbox[0],bbox[2]),
+                        Math.max(bbox[1],bbox[3]),
+                        Math.max(bbox[0],bbox[2]),
+                        Math.min(bbox[1],bbox[3]),
+                    ]
+                    const [oX, oY] = image.getOrigin();
+                    const [imageResX, imageResY] = image.getResolution();
+                    let wnd = [
+                        Math.floor((bbox[0] - oX) / imageResX),
+                        Math.floor((bbox[1] - oY) / imageResY),
+                        Math.ceil((bbox[2] - oX) / imageResX),
+                        Math.ceil((bbox[3] - oY) / imageResY),
+                    ];
+                    /*
+                        Read Gis Data in that window
+                    */
+                    const data = await image.readRasters({
+                        window: wnd,
+                    });
+                    /*
+                        Iterate grid points and fill with gis value
+                    */
+                    var points = []
+                    for( var i = 0 ; i < grid.features.length ; i++ ){
+                        
+                        var p = grid.features[i].geometry.coordinates
+                        
+                        let pc = [
+                            Math.floor((p[0] - oX) / imageResX)-wnd[0],
+                            Math.floor((p[1] - oY) / imageResY)-wnd[1]
+                        ]
+
+                        let ind = pc[1]*data.width + pc[0]
+                        let val = data[0][ind]
+
+                        points.push({
+                            'point': grid.features[i],
+                            'value' : val
+                        })
+                    }
+                    resolve(points);
+                });
+            },
             test(item){
                 let energy = 0.0,costs = 0.0, solarArea = 0.0, windArea = 0.0;
                 let fc = Object.keys(item.details)
@@ -272,9 +386,9 @@
             },
             async getCoefficients(){
                 
+                let data = []
                 let sp = []
                 let wt = []
-                let model = {}
 
                 await axios.get('/solar_panels').then( (response) => {
                     for (let index = 0; index < response.data.length; index++) {
@@ -288,34 +402,30 @@
                         wt.push(element)
                     }
                 })
-                await axios.get('/zones').then( (response) => {
+
+                await axios.get('/zones').then( async (response) => {
                     for (let index = 0; index < response.data.length; index++) {
-                        const element = response.data[index];
-                        const item = element.id
-                        model[item] = {'none':{
-                            'zone': element.name,
-                            'energy': 0,
-                            'costs': 0,
-                            'solarArea': 0,
-                            'windArea': 0
-                        }}
-                        if(element.type == "solar"){
-                            for(let i = 0 ; i < sp.length ; i++ ){
-                                const rs = this.getSolarCoefficients(item,sp[i])
-                                rs.zone = element.name
-                                model[item][sp[i].model] = rs
+                        const zone = response.data[index];
+                        if(zone.type == 'eolic'){
+                            let obj = {
+                                'zone': zone,
+                                'wind_turbines': wt
                             }
-                        }else if(element.type == "eolic"){
-                            for(let i = 0 ; i < wt.length ; i++ ){
-                                const rs = this.getWindCoefficients(item,wt[i])
-                                rs.zone = element.name
-                                model[item][wt[i].model] = rs
+                            data.push(obj)
+                        }
+                        if(zone.type == 'solar'){
+                            let obj = {
+                                'zone': zone,
+                                'solar_panels': sp
                             }
+                            data.push(obj)
                         }
                     }
                 })
                 
+                let model = await this.cfc.get(data)
                 let zones = Object.keys(model)
+
                 for (let i = 0; i < zones.length; i++) {
                     const item = zones[i]
                     let fc = Object.keys(model[item])
@@ -1012,6 +1122,7 @@
                 console.log('Epsilon ' + epsi[0]/n + ' ' + epsi[1]/n)
                         
             },
+
             async makeModel(){
                 this.$bvModal.show('busy');
                 console.log('START')
@@ -1098,8 +1209,8 @@
                 let sc = []
                 let mc = []
                 let isFinish = false
-                this.$root.$on('generation', (val) => {
-                    //console.log(val.gen)
+                this.$root.$on('generation-progress', (val) => {
+                    //console.log(val.progress)
                     //console.log(this.spacing(val.front))
                     let cr = this.crowdingDistanceMetrics(val.front)
                     minCrowding.x.push(val.gen)
@@ -1258,7 +1369,7 @@
                 };
                 */
                 //this.doBetter()
-                this.results = this.nsga2(Number(this.poblationSize),Number(this.generations) )
+                this.results = await this.nsga.solve(Number(this.poblationSize),Number(this.generations),mdl )
                 //console.log('Begin Random')
                 //await this.compare(3)
                 /*
@@ -1471,130 +1582,118 @@
                 return mean*(tec.nominal_power/1000.0)
             },
             getSolarCoefficients(item,tec){
-                //Calculate mean solar potential
-                var centroid = this.centroid(item)
-                var area = this.calcArea(item)
-                var d = 1
-                if(area > 100){
-                    d = Math.sqrt(area)/10.0
-                }
-                var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
+                var polygon = this.$drawnItems._layers[item].toGeoJSON();
                 var bbox = turf.bbox(polygon);
+                var area = this.calcArea(item)
                 var options = {units: 'meters',mask: polygon};
-                var grid = turf.pointGrid(bbox, d , options);
-                var mean = this.pvout.getValueAtLatLng(centroid.geometry.coordinates[1],centroid.geometry.coordinates[0])
-                for( var i = 0 ; i < grid.features.length ; i++ ){
-                    var p = grid.features[i].geometry.coordinates
-                    mean += this.pvout.getValueAtLatLng(p[1],p[0])
-                }
-                mean /= (grid.features.length+1)
-                //Calculate solar panels distribution
-                let w = tec.width
-                let h = tec.height
-                var grid = turf.pointGrid(bbox, h*1.6*2 , options);
-                var rows = []
-                rows.push(grid.features[0])
-                for( var i = 1 ; i < grid.features.length; i++ ){
-                    var p = grid.features[i].geometry.coordinates
-                    var belongs = true
-                    for(var j = 0 ; j < rows.length ; j++ ){
-                        if(p[1] == rows[j].geometry.coordinates[1]){
-                            belongs = false;
-                            break
+                return this.gis.gridZoneGISValue(polygon,item,this.pvout).then((data)=>{
+                    //Calculate mean solar potential
+                    var mean = 0
+                    for( var i = 0 ; i < data.length ; i++ ){
+                        mean += data[i].value
+                    }
+                    mean /= (data.length)
+                    //Calculate solar panels distribution
+                    let w = tec.width
+                    let h = tec.height
+                    var grid = turf.pointGrid(bbox, h*1.6*2 , options);
+                    var rows = []
+                    rows.push(grid.features[0])
+                    for( var i = 1 ; i < grid.features.length; i++ ){
+                        var p = grid.features[i].geometry.coordinates
+                        var belongs = true
+                        for(var j = 0 ; j < rows.length ; j++ ){
+                            if(p[1] == rows[j].geometry.coordinates[1]){
+                                belongs = false;
+                                break
+                            }
+                        }
+                        if(belongs){
+                            rows.push(grid.features[i])
                         }
                     }
-                    if(belongs){
-                        rows.push(grid.features[i])
-                    }
-                }
-                var bboxpoly = turf.bboxPolygon(bbox);
-                var numberOfPanels = 0
-                for( var i = 0 ; i < rows.length; i++ ){
-                    var p = rows[i]
-                    while( turf.booleanPointInPolygon(p, bboxpoly) ){
-                        if(turf.booleanPointInPolygon(p, polygon)){
-                            rows[i] = p
+                    var bboxpoly = turf.bboxPolygon(bbox);
+                    var numberOfPanels = 0
+                    for( var i = 0 ; i < rows.length; i++ ){
+                        var p = rows[i]
+                        while( turf.booleanPointInPolygon(p, bboxpoly) ){
+                            if(turf.booleanPointInPolygon(p, polygon)){
+                                rows[i] = p
+                            }
+                            var distance = w/1000.0; //Kilometers
+                            var bearing = -90;
+                            p = turf.destination(p, distance, bearing);
                         }
-                        var distance = w/1000.0; //Kilometers
-                        var bearing = -90;
-                        p = turf.destination(p, distance, bearing);
                     }
-                }
-                var distribution = L.geoJSON();
-                for( var i = 0 ; i < rows.length; i++ ){
-                    var numberInRow = 0
-                    var p = rows[i]
-                    var fp = p
-                    var lp = p
-                    while( turf.booleanPointInPolygon(p, bboxpoly) ){
-                        if(turf.booleanPointInPolygon(p, polygon)){
-                            lp = p
-                            numberInRow += 2
-                            if(fp == -1 ){
-                                fp = p
+                    var distribution = L.geoJSON();
+                    for( var i = 0 ; i < rows.length; i++ ){
+                        var numberInRow = 0
+                        var p = rows[i]
+                        var fp = p
+                        var lp = p
+                        while( turf.booleanPointInPolygon(p, bboxpoly) ){
+                            if(turf.booleanPointInPolygon(p, polygon)){
+                                lp = p
+                                numberInRow += 2
+                                if(fp == -1 ){
+                                    fp = p
+                                }
+                            }else{
+                                if( lp != fp ){
+                                    var cr = turf.destination(lp, h*1.88/1000.0, 0);
+                                    var cl = turf.destination(fp, h*1.88/1000.0, 0);
+                                    var points = turf.featureCollection([fp,lp,cl,cr]);
+                                    var bbPolygon = turf.convex(points);
+                                    distribution.addLayer(L.geoJSON(bbPolygon,{
+                                        style: {
+                                            "color": "black",
+                                            "opacity": 0.9,
+                                            "weight": 1
+                                        }
+                                    }).bindPopup(numberInRow+2 + ' panels'));
+                                    numberOfPanels += (numberInRow+2)
+                                    numberInRow = 0;
+                                }
+                                fp = -1;
+                                lp = -1;
                             }
-                        }else{
-                            if( lp != fp ){
-                                var cr = turf.destination(lp, h*1.88/1000.0, 0);
-                                var cl = turf.destination(fp, h*1.88/1000.0, 0);
-                                var points = turf.featureCollection([fp,lp,cl,cr]);
-                                var bbPolygon = turf.convex(points);
-                                distribution.addLayer(L.geoJSON(bbPolygon,{
-                                    style: {
-                                        "color": "black",
-                                        "opacity": 0.9,
-                                        "weight": 1
-                                    }
-                                }).bindPopup(numberInRow+2 + ' panels'));
-                                numberOfPanels += (numberInRow+2)
-                                numberInRow = 0;
-                            }
-                            fp = -1;
-                            lp = -1;
+                            var distance = w/1000.0; //Kilometers
+                            var bearing = 90;
+                            p = turf.destination(p, distance, bearing);
                         }
-                        var distance = w/1000.0; //Kilometers
-                        var bearing = 90;
-                        p = turf.destination(p, distance, bearing);
+                        if( lp != fp ){
+                            var cr = turf.destination(lp, h*1.88/1000.0, 0);
+                            var cl = turf.destination(fp, h*1.88/1000.0, 0);
+                            var points = turf.featureCollection([fp,lp,cl,cr]);
+                            var bbPolygon = turf.convex(points);
+                            distribution.addLayer(L.geoJSON(bbPolygon,{
+                                style: {
+                                    "color": "black",
+                                    "opacity": 0.9,
+                                    "weight": 1
+                                }
+                            }).bindPopup(numberInRow+2 + ' panels'));
+                            numberOfPanels += (numberInRow+2)
+                            numberInRow = 0;
+                        }
                     }
-                    if( lp != fp ){
-                        var cr = turf.destination(lp, h*1.88/1000.0, 0);
-                        var cl = turf.destination(fp, h*1.88/1000.0, 0);
-                        var points = turf.featureCollection([fp,lp,cl,cr]);
-                        var bbPolygon = turf.convex(points);
-                        distribution.addLayer(L.geoJSON(bbPolygon,{
-                            style: {
-                                "color": "black",
-                                "opacity": 0.9,
-                                "weight": 1
-                            }
-                        }).bindPopup(numberInRow+2 + ' panels'));
-                        numberOfPanels += (numberInRow+2)
-                        numberInRow = 0;
+                    let results = {
+                        'type': 'solar',
+                        'model': tec.model,
+                        'number': numberOfPanels,
+                        'energy': (numberOfPanels*tec.nominal_power*mean)/1000.0,
+                        'costs': (tec.invest_cost*numberOfPanels + tec.om_cost_per_year*20.0*numberOfPanels)/20.0,
+                        'distribution': distribution,
+                        'solarArea': area,
+                        'windArea': 0.0
                     }
-                }
-                let results = {
-                    'type': 'solar',
-                    'model': tec.model,
-                    'number': numberOfPanels,
-                    'energy': (numberOfPanels*tec.nominal_power*mean)/1000.0,
-                    'costs': (tec.invest_cost*numberOfPanels + tec.om_cost_per_year*20.0*numberOfPanels)/20.0,
-                    'distribution': distribution,
-                    'solarArea': area,
-                    'windArea': 0.0
-                }
-                return results;
+                    return results;
+                })
             },
             getWindCoefficients(item,tec){
-                var mind = (5.0*tec.rotor_diameter)/1000
+                var polygon = this.$drawnItems._layers[item].toGeoJSON();
                 var area = this.calcArea(item)
-                var d = 1
-                if(area > 10000){
-                    d = Math.sqrt(area)/100.0
-                }
-                var polygon = Vue.prototype.$drawnItems._layers[item].toGeoJSON();
-                var bbox = turf.bbox(polygon);
-                var options = {units: 'meters',mask: polygon};
-                var grid = turf.pointGrid(bbox, d , options);
+                var mind = (5.0*tec.rotor_diameter)/1000
                 var layer = null
                 if(tec.iec_class == 1){
                     layer = this.cfiec1
@@ -1603,57 +1702,52 @@
                 }else{
                     layer = this.cfiec3
                 }
-                let points = []
-                for( var i = 0 ; i < grid.features.length ; i++ ){
-                    var p = grid.features[i].geometry.coordinates
-                    points.push({
-                        'point': grid.features[i],
-                        'value' : layer.getValueAtLatLng(p[1],p[0])
+                return this.gis.gridZoneGISValue(polygon,item,layer).then((data)=>{
+                    let points = data
+                    points.sort((a,b)=>{
+                        return (b.value - a.value)
                     })
-                }
-                points.sort((a,b)=>{
-                    return (b.value - a.value)
-                })
-                var locations = []
-                var sum = points[0].value
-                locations.push(points[0].point)
-                for( var i = 1 ; i < points.length ; i++ ){
-                    var p = points[i].point
-                    var n = locations.length;
-                    var belongs = true
-                    for( var j = n-1 ; j >= 0 ; j-- ){
-                        if(turf.distance(p, locations[j]) <= mind ){
-                            belongs = false;
-                            break;
+                    var locations = []
+                    var sum = points[0].value
+                    locations.push(points[0].point)
+                    for( var i = 1 ; i < points.length ; i++ ){
+                        var p = points[i].point
+                        var n = locations.length;
+                        var belongs = true
+                        for( var j = n-1 ; j >= 0 ; j-- ){
+                            if(turf.distance(p, locations[j]) <= mind ){
+                                belongs = false;
+                                break;
+                            }
+                        }
+                        if(belongs == true ){
+                            locations.push(p);
+                            sum += points[i].value
                         }
                     }
-                    if(belongs == true ){
-                        locations.push(p);
-                        sum += points[i].value
+                    var distribution = L.geoJSON();
+                    var windTurbineIcon = L.icon({
+                        iconUrl: 'icon_eolic.png',
+                        iconSize: [50, 50],
+                        iconAnchor: [25,50]
+                    })
+                    for( var i = 0 ; i < (locations.length); i++ ){
+                        var p = locations[i].geometry.coordinates
+                        distribution.addLayer(L.marker([p[1],p[0]],{icon: windTurbineIcon}))
                     }
-                }
-                var distribution = L.geoJSON();
-                var windTurbineIcon = L.icon({
-                    iconUrl: 'icon_eolic.png',
-                    iconSize: [50, 50],
-                    iconAnchor: [25,50]
+                    let results = {
+                        'type': 'eolic',
+                        'model': tec.model,
+                        'number': locations.length,
+                        'energy': sum*tec.nominal_power*8760.0,
+                        'costs': (tec.invest_cost*locations.length + tec.om_cost_per_year*20.0*locations.length)/20.0,
+                        'distribution': distribution,
+                        'solarArea': 0.0,
+                        'windArea': area,
+                        'capacity_factor': sum/locations.length
+                    }
+                    return results;
                 })
-                for( var i = 0 ; i < (locations.length); i++ ){
-                    var p = locations[i].geometry.coordinates
-                    distribution.addLayer(L.marker([p[1],p[0]],{icon: windTurbineIcon}))
-                }
-                let results = {
-                    'type': 'eolic',
-                    'model': tec.model,
-                    'number': locations.length,
-                    'energy': sum*tec.nominal_power*8760.0,
-                    'costs': (tec.invest_cost*locations.length + tec.om_cost_per_year*20.0*locations.length)/20.0,
-                    'distribution': distribution,
-                    'solarArea': 0.0,
-                    'windArea': area,
-                    'capacity_factor': sum/locations.length
-                }
-                return results;
             },
             getWindEnergy(item,tec){
                 var centroid = this.centroid(item)

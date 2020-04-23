@@ -21,7 +21,7 @@
                 <b-spinner variant="primary"></b-spinner>
             </div>
         </div>
-        <!--b-progress :value="prog" :max="1000" :key="key" animated> </b-progress-->
+        <b-progress :value="prog" :max="1" animated show-progress> </b-progress>
     </b-modal>
     
 </div>
@@ -31,12 +31,10 @@
 export default {
     data() {
         return {
-            prog: this.progress,
-            key: 1
+            prog: 0,
         };
     },
     props: {
-        progress: Number
     },
     methods: {
 
@@ -48,10 +46,16 @@ export default {
        
     },
     mounted(){
-        this.$root.$on('bv::modal::shown',(bvEvent,modalId)=>{
+        this.$root.$on('bv::modal::show',(bvEvent,modalId)=>{
             if(modalId == 'busy'){
                 this.prog = 0
             }
+        })
+        this.$root.$on('coefficients-progress',(val)=>{
+            this.prog = val/2
+        })
+        this.$root.$on('generation-progress',(val)=>{
+            this.prog = 0.5+(val.progress/2)
         })
     }
 }

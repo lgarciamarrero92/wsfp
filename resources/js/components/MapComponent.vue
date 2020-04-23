@@ -164,7 +164,7 @@ export default {
         
         
 
-        L.control.layers(baseMaps, overlayMaps).addTo(Vue.prototype.$map);
+        L.control.layers(baseMaps, overlayMaps).addTo(this.$map);
         //Search control 
         /*
         const provider = new OpenStreetMapProvider();
@@ -230,7 +230,7 @@ export default {
             }
             
             Vue.prototype.$drawnItems = new L.FeatureGroup();
-            Vue.prototype.$map.addLayer(Vue.prototype.$drawnItems);
+            this.$map.addLayer(this.$drawnItems);
             var options = {
                 position: 'topright',
                 draw: {
@@ -266,7 +266,7 @@ export default {
                 options
             );
 
-            Vue.prototype.$map.addControl(drawControl);
+            this.$map.addControl(drawControl);
             
             await axios.get('/zones').then(response=>{
                 if(response.data.length){
@@ -285,7 +285,7 @@ export default {
                                     direction: 'center'
                                 })
                                 */
-                                Vue.prototype.$drawnItems.addLayer(layer)
+                                this.$drawnItems.addLayer(layer)
                                 //console.log(layer.getBounds());
                                 layer.on('click', (e) => {
                                     this.$root.$emit('zoneEdited',element.id);
@@ -296,7 +296,7 @@ export default {
                     })
                 }
             })
-            
+            /*
             Vue.prototype.$map.on(L.Draw.Event.DRAWSTART, (e) => {
                 this.isDrawing = true
             })
@@ -310,15 +310,15 @@ export default {
             Vue.prototype.$map.on(L.Draw.Event.EDITSTOP, (e) => {
                 this.isDrawing = false
             })
-            
-            Vue.prototype.$map.on(L.Draw.Event.CREATED, (e) => {
+            */
+            this.$map.on(L.Draw.Event.CREATED, (e) => {
                 var type = e.layerType
                 var layer = e.layer;
                 var polygon = layer.toGeoJSON();
                 this.$root.$emit('zoneCreated',polygon)
                 this.$bvModal.show('add-edit-zone')
             });
-            Vue.prototype.$map.on(L.Draw.Event.EDITED, (e) => {
+            this.$map.on(L.Draw.Event.EDITED, (e) => {
                 var edit = Object.keys(e.layers._layers)
                 for(var i = 0 ; i < edit.length ; i++ ){
                     var layer = e.layers._layers[edit[i]];
