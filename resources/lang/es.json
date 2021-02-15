@@ -98,8 +98,8 @@
   "Busy": "Ocupado",
   "Enter name for this zone": "Introduzca el nombre para esta zona",
   "Enter model": "Introduzca el modelo",
-  "Solar park": "Parque solar",
-  "Eolic farm": "Parque eólico",
+  "Solar farm": "Parque solar",
+  "Wind farm": "Parque eólico",
   "Nominal power": "Potencia nominal",
   "Enter nominal power": "Introduzca la potencia nominal",
   "Enter": "Introduzca",
@@ -144,5 +144,6 @@
   "How many generations?": "Cuántas generaciones?",
   "Run": "Correr",
   "Type a number between 10 and 500": "Teclee un número entre 10 y 500",
-  "Type a number between 20 and 2000": "Teclee un número entre 20 y 2000"
+  "Type a number between 20 and 2000": "Teclee un número entre 20 y 2000",
+  "There is already some data uploaded in this demo, run simulations and inspect the results and charts tabs to quickly interact with the tool. You are free to upload more data for testing purposes.": "Ya hay algunos datos subidos en este demo, corra simulaciones e inpeccione las pestañas resultados y  gráficos para interactuar rápidamente con la herramienta. Usted es libre de subir más datos para propositos de prueba."
 }

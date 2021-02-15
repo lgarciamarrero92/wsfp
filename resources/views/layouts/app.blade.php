@@ -25,9 +25,13 @@
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    <img src="/images/logo.jpg" style = "max-height: 100px;">
-                    <img src="/images/logo_EU.jpg" style = "max-height: 100px;">
+                <a class="navbar-brand" href="{{ url('/') }}" style="line-height: 50%;">
+                    <div>
+                        <span class="h1 text-primary">
+                            WSFP<span class="text-success">.cu</span>
+                        </span>
+                    </div>
+                    <small class="text-muted font-italic" >wind and solar farms planifier</small>
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                     <span class="navbar-toggler-icon"></span>

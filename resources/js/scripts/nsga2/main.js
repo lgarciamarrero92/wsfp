@@ -5,7 +5,7 @@ class nsga2{
         this.listen = new EvtEmitter()
     }
     async solve(n,gen,model){
-        let worker = await spawn(new Worker('./worker.js'))
+        let worker = await spawn(new Worker('./worker.js',{name: 'js/nsga2'}))
         worker.progress().subscribe( (val)=>{
             this.listen.emit('progress',val)
         })

@@ -219,6 +219,16 @@ export default {
                         layer.addTo(Vue.prototype.$map)
                     }
                    // item["details"][zones[i]].distribution.addTo(Vue.prototype.$map)
+                }else{
+                    console.log(this.$drawnItems._layers[zones[i]])
+                    /*
+                    this.$drawnItems.forEach(layer=>{
+                        if(layer._leaflet_id == zones[i]){
+                            console.log(layer)
+                        }
+                    })
+                    */
+                    
                 }
                     
             }

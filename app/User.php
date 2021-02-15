@@ -35,5 +35,18 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'details' => 'array'
     ];
+    public function solar_panels()
+    {
+        return $this->hasMany('App\SolarPanel');
+    }
+    public function wind_turbines()
+    {
+        return $this->hasMany('App\WindTurbine');
+    }
+    public function zones()
+    {
+        return $this->hasMany('App\Zone');
+    }
 }

@@ -9,10 +9,10 @@ var partition = {}
 let subject = new Subject()
 
 const gisFileUrl = {
-    iec1: 'CUB_capacity-factor_IEC1.tif',
-    iec2: 'CUB_capacity-factor_IEC2.tif',
-    iec3: 'CUB_capacity-factor_IEC3.tif',
-    pvout: 'Cuba_GISdata_LTAy_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF/PVOUT.tif'
+    iec1: '/gisFiles/CUB_capacity-factor_IEC1.tif',
+    iec2: '/gisFiles/CUB_capacity-factor_IEC2.tif',
+    iec3: '/gisFiles/CUB_capacity-factor_IEC3.tif',
+    pvout: '/gisFiles/CUB_PVOUT.tif'
 }
 const obj = {
     progress(){

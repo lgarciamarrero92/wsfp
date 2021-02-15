@@ -10,7 +10,7 @@ class cfc{
     }
     async get(data){
         this.progress = 0
-        let worker = await spawn(new Worker('./worker.js'))
+        let worker = await spawn(new Worker('./worker.js',{name: 'js/coefficients'}))
         worker.progress().subscribe( (val)=>{
             this.listen.emit('progress',val)
             this.progress = val
@@ -22,4 +22,6 @@ class cfc{
     
 }
 export default cfc;
+
+
 

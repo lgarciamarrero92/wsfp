@@ -73,7 +73,8 @@
                     </b-form>
                 </b-tab>
                 <b-tab :title="__('Results')">
-                    <results-table :items="results"/>
+                    <b-alert :show ="results.length == 0" variant="info">{{ __('Run simulations first') }}</b-alert>
+                    <results-table v-show="results.length > 0" :items="results"/>
                 </b-tab>
                 <b-tab :title="__('Charts')">
                     <b-alert :show ="results.length == 0" variant="info">{{ __('Run simulations first') }}</b-alert>
@@ -113,7 +114,7 @@
                 </div>
                 <div class="text-center" style="line-height: 1;">
                     <small class="text-muted">
-                        ©2020 Luis E. Garcia Marrero
+                        ©{{new Date().getFullYear()}} Luis E. Garcia Marrero
                     </small>
                 </div>
                 <div class="text-center" style="line-height: 1;">
@@ -129,13 +130,13 @@
 
 <script>
     
-    import * as turf from '@turf/turf'
-    import 'leaflet-geotiff/leaflet-geotiff';
-    import {spawn,Worker} from 'threads'
+    //import * as turf from '@turf/turf'
+    //import 'leaflet-geotiff/leaflet-geotiff';
+    //import {spawn,Worker} from 'threads'
     import cfc from '../scripts/coefficients/main.js'
     import nsga2 from '../scripts/nsga2/main.js'
 
-    const GeoTIFF = require('geotiff') 
+    //const GeoTIFF = require('geotiff') 
     export default {
         data () {
             return {
@@ -1210,8 +1211,7 @@
                 let mc = []
                 let isFinish = false
                 this.$root.$on('generation-progress', (val) => {
-                    //console.log(val.progress)
-                    //console.log(this.spacing(val.front))
+                    
                     let cr = this.crowdingDistanceMetrics(val.front)
                     minCrowding.x.push(val.gen)
                     minCrowding.y.push( cr[0] )
@@ -1314,7 +1314,7 @@
                         data.push(energyCosts)
                     }
                     */        
-                    if(val.gen == 100 ){
+                    if(val.gen == this.generations ){
                         var trace = {
                             type: 'parcoords',
                             line: {
@@ -1398,111 +1398,6 @@
                         console.log('fail!!')
                     }
                 }
-                
-                /*
-                var solver = require("javascript-lp-solver/src/solver")
-                //Save all facilities
-                let sp = {}
-                let wt = {}
-                await axios.get('/solar_panels').then( (response) => {
-                    for (let index = 0; index < response.data.length; index++) {
-                        const element = response.data[index];
-                        sp[element.id] = element
-                    }
-                })
-                await axios.get('/wind_turbines').then( (response) => {
-                    for (let index = 0; index < response.data.length; index++) {
-                        const element = response.data[index];
-                        wt[element.id] = element
-                    }
-                })
-                var model = {
-                    "optimize": {
-                        "energy": "max",
-                        "costs": "min"
-                    },
-                }
-                model["constraints"] = {}
-                model["variables"] = {}
-                //model["options"] = {"timeout": 10000}
-                //model["options"] = {"tolerance": 50}
-                model["ints"] = {}
-                for (let i = 0; i < this.zoneID.length; i++) {
-                    const item = this.zoneID[i]
-                    const oneConstName = '$oneConstName$' + item
-                    model["constraints"][oneConstName] = {"max":1}
-                    model["constraints"]["costs"] = {"max":1000000}
-                    model["constraints"]["energy"] = {"min":253684}
-                    if(this.solarPanelsSelected[item]){
-                        for (let j = 0; j < this.solarPanelsSelected[item].length; j++) {
-                            const spid = this.solarPanelsSelected[item][j]
-                            if(sp[spid]){
-                                const varName = sp[spid].id + '$1$' + sp[spid].model + '$1$' + item
-                                // const betaVarName = '$beta$' + varName
-                                // const beta1ConstName = '$beta1c$' + varName 
-                                // model["constraints"][beta1ConstName] = {"min": 0}
-                                // const beta2ConstName = '$beta2c$' + varName
-                                // model["constraints"][beta2ConstName] = {"max": 0}
-                                // const beta3ConstName = '$beta3c$' + varName
-                                // model["constraints"][beta3ConstName] = {"max": 1}
-                                const mx = this.maxPanels(item,sp[spid].width,sp[spid].height,0)
-                                //const mxFacilinZoneName = '$mxFacilinZoneName$' + varName
-                                //model["constraints"][mxFacilinZoneName] = {"max": mx}
-                                model["variables"][varName] = {}
-                                model["variables"][varName]["energy"] = this.getSolarEnergy(item,sp[spid])*mx
-                                model["variables"][varName]["costs"] = sp[spid].invest_cost*mx
-                                model["variables"][varName][oneConstName] = 1
-                                //model["variables"][varName][beta1ConstName] = -1
-                                //model["variables"][varName][beta2ConstName] = -1
-                                //model["variables"][varName][mxFacilinZoneName] = 1
-                                //model["variables"][betaVarName] = {}
-                                //model["variables"][betaVarName][beta1ConstName] = mx+1
-                                //model["variables"][betaVarName][beta2ConstName] = 1
-                                //model["variables"][betaVarName][beta3ConstName] = 1
-                                //model["variables"][betaVarName][oneConstName] = 1
-                                model["ints"][varName] = 1
-                                //model["ints"][betaVarName] = 1
-                            }
-                        }
-                    }
-                    if(this.windTurbinesSelected[item]){
-                        for (let j = 0; j < this.windTurbinesSelected[item].length; j++) {
-                            const spid = this.windTurbinesSelected[item][j]
-                            if(wt[spid]){
-                                const varName = wt[spid].id + '$2$' + wt[spid].model + '$2$' + item
-                                //const betaVarName = '$beta$' + varName
-                                //const beta1ConstName = '$beta1c$' + varName 
-                                //model["constraints"][beta1ConstName] = {"min": 0}
-                                //const beta2ConstName = '$beta2c$' + varName
-                                //model["constraints"][beta2ConstName] = {"max": 0}
-                                //const beta3ConstName = '$beta3c$' + varName
-                                //model["constraints"][beta3ConstName] = {"max": 1}
-                                const mx = this.maxTurbines(item,wt[spid].rotor_diameter,0)
-                                //const mxFacilinZoneName = '$mxFacilinZoneName$' + varName
-                                //model["constraints"][mxFacilinZoneName] = {"max": mx}
-                                model["variables"][varName] = {}
-                                model["variables"][varName]["energy"] = this.getWindEnergy(item,wt[spid])*mx
-                                model["variables"][varName]["costs"] = wt[spid].invest_cost*mx
-                                model["variables"][varName][oneConstName] = 1
-                                //model["variables"][varName][beta1ConstName] = -1
-                                //model["variables"][varName][beta2ConstName] = -1
-                                //model["variables"][varName][mxFacilinZoneName] = 1
-                                //model["variables"][betaVarName] = {}
-                                //model["variables"][betaVarName][beta1ConstName] = mx+1
-                                //model["variables"][betaVarName][beta2ConstName] = 1
-                                //model["variables"][betaVarName][beta3ConstName] = 1
-                                //model["variables"][betaVarName][oneConstName] = 1
-                                model["ints"][varName] = 1
-                                //model["ints"][betaVarName] = 1
-                            }
-                        }
-                    }
-                }
-                console.log(model)
-                let results = solver.Solve(model);
-                //this.decodeSolution(results["vertices"][0],wt,sp)
-                console.log(results);
-                */
                 this.$bvModal.hide('busy');
                 this.$bvToast.toast( `${this.__('Active Results and Charts tabs to inspect results')}`,{
                     title: `${this.__('Information')}`,

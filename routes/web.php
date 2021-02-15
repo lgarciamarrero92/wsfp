@@ -10,18 +10,12 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
 Auth::routes(['verify' => true]);
 Route::get('/', function () {
     //return view('welcome');
     return redirect('/home');
 });
 //Localization
-Route::get('/prueba', function () {
-    $path = public_path('CUB_capacity-factor_IEC1.tif');
-    $fp=file($path);
-    dd($fp);
-});
 Route::get('/js/lang.js', function () {
     $strings = Cache::rememberForever('lang.js', function(){
         $lang = config('app.locale');
@@ -37,6 +31,7 @@ Route::get('/js/lang.js', function () {
 Route::get('/translate/{locale}','TranslateController@set')->name('translate');
 //
 Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/demo', 'DemoController@index')->name('demo');
  //Api
  //Solar panels
  Route::get('/solar_panels','SolarPanelController@getAll');

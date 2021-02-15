@@ -73,8 +73,8 @@ export default {
         return {
             busy: false,
             radioOptions: [
-                {text: this.__('Solar park'),value: "solar"},
-                {text: this.__('Eolic farm'),value: "eolic"}
+                {text: this.__('Solar farm'),value: "solar"},
+                {text: this.__('Wind farm'),value: "eolic"}
             ],
             isEdited: false,
             idEdited: null,

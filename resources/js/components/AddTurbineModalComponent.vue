@@ -70,7 +70,7 @@
                     :disabled="isBusy"
                     :state="!form.validated?null:form.errors.iec_class == undefined"
                     v-model="form.iec_class"
-                    :options="[{value: null,text: this.__('Select iec class')},{value: 1,text:'IEC 1'},{value: 2,text:'IEC 2'},{value: 3,text:'IEC 3'}]"
+                    :options="[{value: null,text: this.__('Select iec class')},{value: 1,text:'IEC I'},{value: 2,text:'IEC II'},{value: 3,text:'IEC III'}]"
                     required
                 >
                     
