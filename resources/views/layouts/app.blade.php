@@ -20,6 +20,15 @@
     <link href="{{ mix('css/app.css') }}" rel="stylesheet">
 
     <script src="plotly-latest.min.js"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-G9XGHNQHP5"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-G9XGHNQHP5');
+    </script>
 </head>
 <body>
     <div id="app">
