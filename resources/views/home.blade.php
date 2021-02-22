@@ -11,10 +11,10 @@
     </div>
     @endif
     <div class="row justify-content-center">
-        <div class = "col-6">
+        <div class = "col-md-6 col-12">
             <map-component />
         </div>
-        <div class = "col-6">
+        <div class = "col-md-6 col-12">
             <control-panel-component />
         </div>
         <add-turbine-modal></add-turbine-modal>
