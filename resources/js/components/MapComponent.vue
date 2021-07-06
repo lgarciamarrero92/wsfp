@@ -81,7 +81,14 @@ export default {
         this.$root.$on('hide-map-loading',()=>{
             this.mapLoading = false
         });
-        this.initDraw()
+        this.initDraw().catch((e)=>{
+            this.$bvToast.toast('Something wrong happen. Please, reload this page.',{
+                title: 'Confirmation',
+                variant: 'danger',
+                autoHideDelay: 50000,
+                solid: true
+            })
+        })
     },
     methods: {
         async initDraw(){

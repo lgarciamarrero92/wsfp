@@ -255,21 +255,44 @@
             async getResults(){
                 this.$bvModal.show('busy');
                 console.log('START')
-                let mdl = await this.getModel()
+                var error = false
+                let mdl = await this.getModel().catch((e)=>{
+                    error = true
+                    this.$bvModal.hide('busy');
+                    this.$bvToast.toast('Something wrong happen. Please, run simulations again.',{
+                        title: 'Confirmation',
+                        variant: 'danger',
+                        autoHideDelay: 50000,
+                        solid: true
+                    })
+                })
                 console.log('END')
                 this.$root.$on('generation-progress', (val) => {     
                     if(val.gen == this.generations ){
                         this.showParCoordsPlot(val)
                     }
                 });
-                this.results = await this.nsga.solve(Number(this.populationSize),Number(this.generations),mdl )
-                this.$bvModal.hide('busy');
-                this.$bvToast.toast( `${this.__('Active Results and Charts tabs to inspect results')}`,{
-                    title: `${this.__('Information')}`,
-                    variant: 'success',
-                    autoHideDelay: 5000,
-                    solid: true
+                this.results = await this.nsga.solve(Number(this.populationSize),Number(this.generations),mdl).catch((e)=>{
+                    if(!error){
+                        error = true
+                        this.$bvModal.hide('busy');
+                        this.$bvToast.toast('Something wrong happen. Please, run simulations again.',{
+                            title: 'Confirmation',
+                            variant: 'danger',
+                            autoHideDelay: 50000,
+                            solid: true
+                        })
+                    }
                 })
+                if(!error){
+                    this.$bvModal.hide('busy');
+                    this.$bvToast.toast( `${this.__('Active Results and Charts tabs to inspect results')}`,{
+                        title: `${this.__('Information')}`,
+                        variant: 'success',
+                        autoHideDelay: 5000,
+                        solid: true
+                    })
+                }
             },
             showParCoordsPlot(val){
                 var trace = {

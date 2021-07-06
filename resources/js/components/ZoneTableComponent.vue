@@ -1,5 +1,16 @@
 <template>
     <div>
+        <div class="d-flex justify-content-end">
+            <b-button
+                style="margin-bottom: 5px;"
+                v-if="error"
+                @click="$refs.zoneTable.refresh()"
+                size="sm"
+                variant="outline-primary"
+            > <i class="fa fa-reload"></i> 
+              {{__('Refresh table')}}
+            </b-button>
+        </div>
         <b-table
             ref="zoneTable"
             id = "zone-table"
@@ -67,6 +78,7 @@ export default {
             currentPage: 1,
             fields: [ { key: 'name', label: this.__('Name') }, { key: 'type', label: this.__('Type')}, { key: 'actions', label: this.__('Actions')}],
             totalRows: 1,
+            error: false
         }
     },
     mounted(){
@@ -76,9 +88,16 @@ export default {
         getItems(ctx){
             return axios.get(`/zones?page=${ctx.currentPage}&perPage=${ctx.perPage}`).then( response => {
                 this.totalRows = response.data.total;
+                this.error = false
                 return response.data.data;
             }).catch(e=>{
-
+                this.error = true
+                this.$bvToast.toast('Something wrong happen. Please, refresh zones table, reload this page or try later.',{
+                    title: 'Confirmation',
+                    variant: 'danger',
+                    autoHideDelay: 50000,
+                    solid: true
+                })
             })
         },
         deleteHandle(item){

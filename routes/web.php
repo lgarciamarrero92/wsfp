@@ -10,7 +10,7 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-Auth::routes(['verify' => true]);
+Auth::routes(['verify' => true, 'register' => false]);
 Route::get('/', function () {
     //return view('welcome');
     return redirect('/home');

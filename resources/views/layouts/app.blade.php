@@ -57,6 +57,13 @@
                         @php
                             $locale = config('app.locale');
                         @endphp
+                        @guest
+                        <li class="nav-item dropdown">
+                            <a class="nav-link" href="{{route('demo')}}" role="button">
+                                {{__("Demo")}}
+                            </a>
+                        </li>
+                        @endguest
                         <!-- Language Links -->
                         <li class="nav-item dropdown">
                             <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
