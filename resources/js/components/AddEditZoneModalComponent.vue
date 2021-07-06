@@ -103,7 +103,8 @@ export default {
                     this.resetForm()
                     L.geoJSON(data,{
                         onEachFeature: (feature,layer) => {
-                            layer._leaflet_id = response.data
+                            //layer._leaflet_id = response.data
+                            layer.zone_id = response.data
                             layer.options.color = "#bada55"
                             layer.options.weight = 4
                             layer.options.opacity = 0.5

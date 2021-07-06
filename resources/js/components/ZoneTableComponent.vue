@@ -100,7 +100,7 @@ export default {
                 if (value) {
                     axios.delete(`/zones/${item.id}`)
                     .then(response => {
-                        this.$drawnItems.removeLayer(item.id)
+                        this.$drawnItems.removeLayer(this.$zone_layer[item.id])
                         this.$refs.zoneTable.refresh();
                         this.$bvToast.toast( `${this.__('Data deleted successfully')}`,{
                             title: `${this.__('Confirmation')}`,
@@ -120,7 +120,8 @@ export default {
             this.$bvModal.show('add-edit-zone');  
         },
         zoomHandle(item){
-            let bounds = Vue.prototype.$drawnItems._layers[item.id]._bounds
+            var layer = Vue.prototype.$drawnItems._layers[this.$zone_layer[item.id]]
+            let bounds = layer._bounds
             Vue.prototype.$map.fitBounds(bounds);
         },
     },

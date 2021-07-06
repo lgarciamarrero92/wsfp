@@ -1,6 +1,17 @@
 <template>
     <div>
-        <div class="row">
+        <div class="row m-1" style="border: 1px solid black;">
+            <div class="col-12 pt-2">
+                <strong style="
+                    position: absolute;
+                    bottom: 0.3px;
+                    background-color: white;
+                    padding-left: 4px;
+                    padding-right: 4px;
+                ">
+                    Compromise programming
+                </strong> 
+            </div>
             <div class="col-3">
                 <label for="range-energy">  {{ __('Energy') + ': ' + getRelativesWeights[0].toFixed(2)}}</label>
                 <b-form-input id="range-energy" min="0" max="10" type="range" v-model="weights[0]"></b-form-input>
@@ -16,6 +27,22 @@
             <div class="col-3">
                 <label for="range-wind-area">  {{ __('Wind Area') + ': ' + getRelativesWeights[3].toFixed(2)}}</label>
                 <b-form-input id = "range-wind-area" min="0" max="10" type="range" v-model="weights[3]" ></b-form-input>
+            </div>
+            <div class="col-12">
+                <b-form-group v-slot="{ ariaDescribedby }">
+                    <b-form-radio-group
+                        id="Ldis"
+                        v-model="Ldis"
+                        :aria-describedby="ariaDescribedby"
+                        name="l-dis"
+                        class="d-flex justify-content-between"
+                    >
+                        <b-form-radio value="1">L1</b-form-radio>
+                        <b-form-radio value="2">L2</b-form-radio>
+                        <b-form-radio value="3">L3</b-form-radio>
+                        <b-form-radio value="-1">L&#8734;</b-form-radio>
+                    </b-form-radio-group>
+                </b-form-group>
             </div>
         </div>
         <b-table
@@ -146,14 +173,23 @@ export default {
                 },
                 {
                     key: 'weight',
-                    label: this.__('Weight'),
+                    label: this.__('Distance to ideal'),
                     formatter: (value,key,item) => {
-                        return Number(( 
-                                    (item.energy/this.mE)*this.getRelativesWeights[0]+
-                                    ( 1.0-(item.costs/this.mC) )*this.getRelativesWeights[1]+
-                                    ( 1.0-(item.windArea/this.mWA) )*this.getRelativesWeights[2]+
-                                    ( 1.0-(item.solarArea/this.mSA) )*this.getRelativesWeights[3]
-                                ).toFixed(2))
+                        if(this.Ldis != -1){
+                            return Math.pow(( 
+                                Math.pow((Math.abs(this.idealPoint['energy']-item.energy)/Math.abs(this.idealPoint['energy']-this.nadirPoint['energy']))*this.getRelativesWeights[0],this.Ldis)+
+                                Math.pow((Math.abs(this.idealPoint['costs']-item.costs)/Math.abs(this.idealPoint['costs']-this.nadirPoint['costs']))*this.getRelativesWeights[1],this.Ldis)+
+                                Math.pow((Math.abs(this.idealPoint['windArea']-item.windArea)/Math.abs(this.idealPoint['windArea']-this.nadirPoint['windArea']))*this.getRelativesWeights[2],this.Ldis)+
+                                Math.pow((Math.abs(this.idealPoint['solarArea']-item.solarArea)/Math.abs(this.idealPoint['solarArea']-this.nadirPoint['solarArea']))*this.getRelativesWeights[3],this.Ldis) 
+                            ),1.0/this.Ldis).toFixed(2)
+                        }else{
+                            return Math.max(
+                                (Math.abs(this.idealPoint['energy']-item.energy)/Math.abs(this.idealPoint['energy']-this.nadirPoint['energy']))*this.getRelativesWeights[0],
+                                (Math.abs(this.idealPoint['costs']-item.costs)/Math.abs(this.idealPoint['costs']-this.nadirPoint['costs']))*this.getRelativesWeights[1],
+                                (Math.abs(this.idealPoint['windArea']-item.windArea)/Math.abs(this.idealPoint['windArea']-this.nadirPoint['windArea']))*this.getRelativesWeights[2],
+                                (Math.abs(this.idealPoint['solarArea']-item.solarArea)/Math.abs(this.idealPoint['solarArea']-this.nadirPoint['solarArea']))*this.getRelativesWeights[3]
+                            ).toFixed(2)
+                        }
                     },
                     sortable: true,
                     sortByFormatted: true
@@ -168,43 +204,41 @@ export default {
             mC: 0,
             mWA: 0,
             mSA: 0,
-            inMap: [],
-            weights: [5,5,5,5]
+            inMap: L.featureGroup([]),
+            weights: [5,5,5,5],
+            Ldis: 2,
         }
     },
     mounted(){
-        
+        this.inMap.addTo(Vue.prototype.$map)
     },
     props: {
-        items: Array
+        items: Array,
+        nadirPoint: Object,
+        idealPoint: Object
     },
     methods: {
         
         seeInMap(item){
-            if(this.inMap.length){
-                this.inMap.forEach(layer => {
-                    layer.clearLayers()
-                });
-                this.inMap = []
-            }
+            this.$root.$emit('show-map-loading');
+            this.inMap.clearLayers()
             let zones = Object.keys(item.details)
             for(var i = 0 ; i < zones.length; i++ ){
                 if(item["details"][zones[i]].distribution){
                     let gjson = JSON.parse(item["details"][zones[i]].distribution)
                     if(item["details"][zones[i]].type == "eolic"){
                         let layer = L.geoJSON( gjson,{
-                            pointToLayer: function(feature,latlng){
+                            pointToLayer: (feature,latlng)=>{
                                 return L.marker(latlng, {
-                                    icon: L.icon({
-                                        iconUrl: 'icon_eolic.png',
+                                    icon: new L.icon({
+                                        iconUrl: 'images/icon_eolic.png',
                                         iconSize: [50, 50],
                                         iconAnchor: [25,50]
                                     })
                                 })
                             }
                         })
-                        this.inMap.push(layer)
-                        layer.addTo(Vue.prototype.$map)
+                        this.inMap.addLayer(layer)
                     }
                     if(item["details"][zones[i]].type == "solar"){
                         let layer = L.geoJSON( gjson,{
@@ -215,23 +249,14 @@ export default {
                                 return feature.properties.style
                             }
                         })
-                        this.inMap.push(layer)
-                        layer.addTo(Vue.prototype.$map)
+                        this.inMap.addLayer(layer)
                     }
-                   // item["details"][zones[i]].distribution.addTo(Vue.prototype.$map)
-                }else{
-                    console.log(this.$drawnItems._layers[zones[i]])
-                    /*
-                    this.$drawnItems.forEach(layer=>{
-                        if(layer._leaflet_id == zones[i]){
-                            console.log(layer)
-                        }
-                    })
-                    */
-                    
                 }
                     
             }
+            setTimeout(() => {
+                this.$root.$emit('hide-map-loading')
+            }, 0);
         },
         getDetails(item){
             let zones = Object.keys(item.details)
