@@ -138,15 +138,6 @@ const obj = {
                             "weight": 1
                         }
                         features.push( bbPolygon )
-                        /*
-                        distribution.addLayer(L.geoJSON(bbPolygon,{
-                            style: {
-                                "color": "black",
-                                "opacity": 0.9,
-                                "weight": 1
-                            }
-                        }).bindPopup(numberInRow+2 + ' panels'));
-                        */
                         numberOfPanels += (numberInRow+2)
                         numberInRow = 0;
                     }
@@ -169,15 +160,6 @@ const obj = {
                     "weight": 1
                 }
                 features.push( bbPolygon )
-                /*
-                distribution.addLayer(L.geoJSON(bbPolygon,{
-                    style: {
-                        "color": "black",
-                        "opacity": 0.9,
-                        "weight": 1
-                    }
-                }).bindPopup(numberInRow+2 + ' panels'));
-                */
                 numberOfPanels += (numberInRow+2)
                 numberInRow = 0;
             }
@@ -196,7 +178,6 @@ const obj = {
         return results;
     },
     getWindCoefficients(polygon,tec,points){
-        //var polygon = this.$drawnItems._layers[item].toGeoJSON();
         var area = turf.area(polygon)
         var mind = (5.0*tec.rotor_diameter)/1000
     

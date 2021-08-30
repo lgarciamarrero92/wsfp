@@ -61,15 +61,7 @@ const obj = {
                 })
             }
         }
-        /*
-        if(dominated.length){
-            for(var i = 0 ; i < dominated.length; i++ ){
-                delete model[dominated[i].zone][dominated[i].facility]
-            }
-        }
-        */
         return sol;
-
     },
     domine(m1,m2){
         if(m1["energy"] > m2["energy"] && m1["costs"] <= m2["costs"] && m1["solarArea"] <= m2["solarArea"] && m1["windArea"] <= m2["windArea"]) return true;
@@ -174,7 +166,6 @@ const obj = {
                 Q.push(P[r])
             }
         }
-        //console.log('Binary Tournament works!')
         return Q;
     },
     crossover(p1,p2){
@@ -184,14 +175,6 @@ const obj = {
 
         let c1 = _.cloneDeep(p1)
         let c2 = _.cloneDeep(p2)
-        /*
-        for(let i = 0 ; i <= l ; i++ ){
-            c1.details[fc[i]] = p2.details[fc[i]]
-        }
-        for(let i = l+1 ; i < fc.length ; i++ ){
-            c2.details[fc[i]] = p1.details[fc[i]]
-        }
-        */
         
         for(let i = 0 ; i < fc.length ; i++ ){
             if(Math.random() >= 0.5 ){
@@ -212,7 +195,6 @@ const obj = {
             c1.windArea += c1.details[fc[i]].windArea
             c2.windArea += c2.details[fc[i]].windArea        
         }
-        //console.log('Crossover works!')
         return [c1,c2];
     },
     mutate(children){
@@ -243,7 +225,6 @@ const obj = {
             }
             mutated.push(child)
         })
-        //console.log('Mutate works!')
         return mutated;
     },
     makeNewPop(P){
