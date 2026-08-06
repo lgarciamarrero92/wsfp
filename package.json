@@ -36,7 +36,7 @@
         "@turf/point-on-surface": "^4.7.3",
         "@turf/turf": "^5.1.6",
         "bootstrap-vue": "^2.1.0",
-        "browserslist": "^4.11.1",
+        "browserslist": "^4.16.5",
         "chart.js": "^2.9.3",
         "child_process": "^1.0.2",
         "esri-leaflet-geocoder": "^2.3.2",
